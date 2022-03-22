@@ -333,7 +333,7 @@ class Back_Wheels(object):
             forward_B (int): 0,1 (Configuration of the rotation direction of the other motor). Defaults to 0.
         """
         self.forward_A = forward_A
-        self.forward_B = 1
+        self.forward_B = forward_B
 
         self.left_wheel = Motor(self.MOTOR_A, offset=self.forward_A)
         self.right_wheel = Motor(self.MOTOR_B, offset=self.forward_B)
