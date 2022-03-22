@@ -1,0 +1,5 @@
+git pull
+git add beispiel.txt      # für einzelne dateien
+git add --all         # gesamten orderninhalt, empfehlenswert
+git commit -m "Kommentarxy"
+git push
