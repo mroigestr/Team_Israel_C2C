@@ -94,16 +94,18 @@ class BaseCar(object):
         """
         self._direction = direction   
     
-    def drive(self, speed, direction) -> None:
+    def drive(self, speed: int = 0, direction: int = 0, steering_angle: int = 90) -> None:
         
+        self.fw.turn(steering_angle)
         self.bw.speed = speed
+        self.speed = speed
+        self.direction = direction
+        self.steering_angle = steering_angle
         if direction == 1:
             self.bw.forward()
         elif direction == -1:
             self.bw.backward()          
 
-    def turn(self, steering_angle) -> None:
-        self.fw.turn(steering_angle)
  
     def stop(self) -> None:
         """Sets the speed to 0.
@@ -146,22 +148,14 @@ class BaseCar(object):
         
         # 1 Sek geradeaus vorwärts
         
-        self.speed = 40
-        self.direction = 1
-        self.steering_angle = 90
-        self.turn(self.steering_angle)
-        self.drive(self.speed, self.direction)
-        print('forward speed : {}, steering angle : {}'.format(self.speed, self.steering_angle))
+        self.drive(40, 1, 90)
+        print('{} speed : {}, steering angle : {}'.format("forward" if self.direction == 1 else "backward", self.speed, self.steering_angle))
         bk.time.sleep(t*1)
         
        # 8 Sek. vorwärts mit max Lenkwinkel im Uhrzeigersinn 
-        
-        self.speed = 40
-        self.direction = 1
-        self.steering_angle = 135
-        self.turn(self.steering_angle)       
-        self.drive(self.speed, self.direction)
-        print('forward speed : {}, steering angle : {}'.format(self.speed, self.steering_angle))
+           
+        self.drive(40, 1, 135)
+        print('{} speed : {}, steering angle : {}'.format("forward" if self.direction == 1 else "backward", self.speed, self.steering_angle))
         bk.time.sleep(t*8)
         
        # Stop 
@@ -171,13 +165,9 @@ class BaseCar(object):
         bk.time.sleep(t*1)
 
        # 8 Sek. rückwärts mit max Lenkwinkel im Uhrzeigersinn 
-
-        self.speed = 40
-        self.direction = -1
-        self.steering_angle = 135
-        self.turn(self.steering_angle)       
-        self.drive(self.speed, self.direction)
-        print('forward speed : {}, steering angle : {}'.format(self.speed, self.steering_angle))
+    
+        self.drive(40, -1, 135)
+        print('{} speed : {}, steering angle : {}'.format("forward" if self.direction == 1 else "backward", self.speed, self.steering_angle))
         bk.time.sleep(t*8)
 
         # 1 Sek geradeaus rückwärts
@@ -185,9 +175,8 @@ class BaseCar(object):
         self.speed = 40
         self.direction = -1
         self.steering_angle = 90
-        self.turn(self.steering_angle)
-        self.drive(self.speed, self.direction)
-        print('forward speed : {}, steering angle : {}'.format(self.speed, self.steering_angle))
+        self.drive(40, -1, 90)
+        print('{} speed : {}, steering angle : {}'.format("forward" if self.direction == 1 else "backward", self.speed, self.steering_angle))
         bk.time.sleep(t*1)
 
        # Stop 
@@ -197,9 +186,10 @@ class BaseCar(object):
         bk.time.sleep(t*1)
 
 def main():
-    bw = BaseCar()
-    bw.Fahrparcours_1()
-    bw.Fahrparcours_2()
+    bc = BaseCar()
+   # bc.Fahrparcours_1()
+    bc.Fahrparcours_2()
+    
 
 main()
     
