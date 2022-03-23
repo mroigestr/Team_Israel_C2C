@@ -20,6 +20,8 @@ class BaseCar:
         self._speed = speed
         self._direction = direction
 
+        self.bw = bk.Back_Wheels()
+
 
     def Fahrparcours_1(self):
         bw = bk.Back_Wheels()

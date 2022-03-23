@@ -21,10 +21,12 @@ class BaseCar(object):
         """
         
     def __init__(self):
-        pass
     
         self._speed = 0
+        self._direction = 0
+        self._steering_angle = 90
         self.bw = bk.Back_Wheels()
+        self.fw = bk.Front_Wheels()
 
     @property    
     def speed(self):
@@ -41,7 +43,7 @@ class BaseCar(object):
     def speed(self, speed):
         """Sets the speed. 0-100. 0 is stop. 100 is max speed. It also sets the speed of the left and right back wheels.
 
-        Use as setter: BW.speed=Int
+        Use as setter: Bs.speed=Int
 
         Args:
             speed (int): speed of the motors.
@@ -92,10 +94,22 @@ class BaseCar(object):
         """
         self._direction = direction   
     
+    def drive(self, speed, direction) -> None:
+        
+        self.bw.speed = speed
+        if direction == 1:
+            self.bw.forward()
+           # self.bw.forward_A = 0
+           # self.bw.forward_B = 0
+        elif direction == -1:
+            self.bw.backward()
+           # self.bw.forward_A = 1
+           # self.bw.forward_B = 1        
+
     def stop(self) -> None:
         """Sets the speed to 0.
         """
-        self.speed = 0
+        self.bw.speed = 0
 
     def Fahrparcours_1(self) -> None:
         """
@@ -103,22 +117,28 @@ class BaseCar(object):
         3 Sekunden geradeaus, stoppt für 1 Sekunde und fährt 3 Sekunden rückwärts.
         """
         t = 1
-        bk.Back_Wheels.speed = 10
-        bk.Back_Wheels.forward()
-        print('forward speed : {}'.format(bk.Back_Wheels.speed))
+        self.speed = 40
+        self.direction = 1
+        self.drive(self.speed, self.direction)
+        print('forward speed : {}'.format(self.speed))
 
         bk.time.sleep(t*3)
-        bk.Back_Wheels.stop()
+        self.stop()
         bk.time.sleep(t*1)
 
-        bk.Back_Wheels.backward()
+        self.speed = 40
+        self.direction = -1
+        self.drive(self.speed, self.direction)
         bk.time.sleep(t*3)
 
-        bk.Back_Wheels.speed = 0
-        print('stop speed : {}'.format(bk.Back_Wheels.speed))
+        self.stop()
+        print('stop speed : {}'.format(self.speed))
 
 
 
 def main():
     bw = BaseCar()
     bw.Fahrparcours_1()
+
+main()
+    
