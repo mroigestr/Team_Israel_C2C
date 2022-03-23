@@ -187,8 +187,8 @@ class BaseCar(object):
 
 def main():
     bc = BaseCar()
-    bc.Fahrparcours_1()
-    # bc.Fahrparcours_2()
+    # bc.Fahrparcours_1()
+    bc.Fahrparcours_2()
     
 if __name__ == '__main__':
     main()
