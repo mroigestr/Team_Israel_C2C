@@ -26,23 +26,16 @@ class SonicCar(object):
     
     def drive_till_obstacle(self, speed: int = 0, direction: int = 0, steering_angle: int = 90) -> None:
         
-        self.bc1.fw.turn(steering_angle)
-        self.bc1.bw.speed = speed
-        self.speed = speed
-        self.direction = direction
-        self.steering_angle = steering_angle
-        self.bc1.bw.speed = speed
-        if direction == 1:
-            self.bc1.bw.forward()
-        elif direction == -1:
-            self.bc1.bw.backward()
+        self.bc1.drive(speed, direction, steering_angle)
         
         while True:
             print(self.us.distance())
-            if self.us.distance() > 0 and self.us.distance() < 3:
+            if self.us.distance() > 0 and self.us.distance() < 5 :
                 self.bc1.stop()
                 break
+            bc.bk.time.sleep(0.1)
         
+        print("ende")
                 
                 
     def Fahrparcours_3(self) -> None:
