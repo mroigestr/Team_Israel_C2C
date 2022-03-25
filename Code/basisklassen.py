@@ -301,7 +301,7 @@ class Front_Wheels(object):
 
 #import TB6612
 #import PCA9685
-class Back_Wheeaberls(object):
+class Back_Wheels(object):
     """
     A class for the SunFounder rear wheel drive.
 
