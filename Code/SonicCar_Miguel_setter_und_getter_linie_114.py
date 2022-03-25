@@ -37,7 +37,8 @@ class SonicCar(bc.BaseCar):
         if abstand > 0:
             self._abstand = abstand
         else:
-            print("Fehler")
+            print("Fehler, abstand wird auf Default-wert (10) gesetzt")
+            self._abstand = 10
 
     def driving_data(self,dist):
         t_now = datetime.utcnow().strftime('%H:%M:%S.%f')[:-3]
@@ -72,7 +73,6 @@ class SonicCar(bc.BaseCar):
             data = self.driving_data(dist)
             self.global_data.append(data)
             break
-   
 
     def Fahrparcours_3(self) -> None:        
         self.drive(50, 1, 90)
@@ -111,7 +111,7 @@ class SonicCar(bc.BaseCar):
             self.global_data.append(data)   
 
     def Fahrparcours_4(self) -> None:
-        self.abstand = abstand
+        self.abstand = self.abstand    # setter = getter, den aktuellen Wert (über getter geliefert) prüfen zu können (über setter) 
         self.Fahrparcours_3()        
         self.RW()
         self.FW_slow()              
@@ -120,7 +120,7 @@ class SonicCar(bc.BaseCar):
         
 def main():
     
-    sc = SonicCar(6)
+    sc = SonicCar(-6)
     #sc.abstand = 10
     sc.Fahrparcours_4()
     sc.write_to_csv()
