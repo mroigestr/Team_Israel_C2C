@@ -38,12 +38,7 @@ class BaseCar(object):
         with open("config.json", "r") as f:
             data = json.load(f)
             self.turning_offset = data["turning_offset"]
-            self.forward_A = data["forward_A"]
-            self.forward_B = data["forward_B"]
-            print("Test der Lenkkalibrierung in config.json")
-            print("Turning Offset: ", self.turning_offset)
-            print("Forward A: ", self.forward_A)
-            print("Forward B: ", self.forward_B)
+            #return self.turning_offset
 
 
     @property    
@@ -90,8 +85,6 @@ class BaseCar(object):
             steering_angle (int): steering angle of the front wheels.
         """
         self._steering_angle = steering_angle + self.turning_offset
-        print("Lenkwinkel: ",steering_angle)
-        #print(self.turning_offset)
     
     @property    
     def direction(self):
@@ -116,12 +109,12 @@ class BaseCar(object):
         self._direction = direction   
     
     def drive(self, speed: int = 0, direction: int = 0, steering_angle: int = 90) -> None:
-        
-        self.fw.turn(steering_angle)
+                
         self.bw.speed = speed
         self.speed = speed
         self.direction = direction
         self.steering_angle = steering_angle
+        self.fw.turn(self.steering_angle)
         if direction == 1:
             self.bw.forward()
         elif direction == -1:
