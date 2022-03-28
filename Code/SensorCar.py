@@ -1,5 +1,6 @@
 import SonicCar as sc
 import basisklassen as bk
+import csv
 
 class SensorCar(sc.SonicCar):
 
@@ -17,9 +18,21 @@ class SensorCar(sc.SonicCar):
         # print("In def __init__")
         # print(self.ir._references)
 
+    def write_to_csv(self):
+        # Referenzwerte ermitteln mit weißem Background und schwarzer Line in der Mitte.
+        # Schreibt Poti-Stellung, Sensorwerte und Faktor zwischen Rand- und Mittelsensor.
+        # headerList = ["Sens", "D2", "D3", "D4", "D5", "D6", "Faktor"]
+        with open("IR-Ref.csv", mode ='a') as log_file:
+            write = csv.writer(log_file)
+            ir_sens = input("IR-Poti [1...3]: ")
+            # write.writerow(headerList)
+            ir_sens_fact = self.ir._references[2] / self.ir._references[0]
+            write.writerow([ir_sens, self.ir._references, ir_sens_fact])
+
 
 def main():
     irCar = SensorCar()
+    irCar.write_to_csv()
     # print(irCar.background)
 
 if __name__ == '__main__':
