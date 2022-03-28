@@ -12,29 +12,25 @@ class SonicCar(bc.BaseCar):
     umfassen die Geschwindigkeit, die Fahrtrichtung, den Lenkwinkel und die Daten des
     Ultraschall‑Sensors. Dazu soll Folgendes entwickelt und getestet werden.
     """
-    # def __init__(self, speed: int = 0, direction: int = 0, steering_angle: int = 90):
-    #     super().__init__(speed, direction, steering_angle)
 
-    def __init__(self):
-        # super().__init__(speed, direction, steering_angle)
-        # super().__init__()
-
-        # self._speed = 0
-        # self._direction = 0
-        # self._steering_angle = 90
+    def __init__(self, abstand):
         self.fw = bc.bk.Front_Wheels()
         self.bw = bc.bk.Back_Wheels()
         self.us = bc.bk.Ultrasonic()
-        self._too_close = 10
+        self._abstand = abstand
         self.global_data =[]
+        self.car_calibration()
 
-    # #@property
-    # def too_close(self):
-    #     return self._too_close
+    @property
+    def abstand(self):
+         return self._abstand
 
-    #@too_close.setter
-    def mt_too_close(self, speed, factor: int = 1):
-            self.too_close = int(factor*(speed/3))
+    @abstand.setter
+    def abstand(self, abstand):
+        if abstand > 0:
+            self._abstand = abstand
+        else:
+            print("Fehler")
 
     def driving_data(self,dist):
         t_now = datetime.utcnow().strftime('%H:%M:%S.%f')[:-3]
@@ -47,17 +43,17 @@ class SonicCar(bc.BaseCar):
             write.writerow(headerList)
             write.writerows(self.global_data)    
     
-    def obstacle(self, too_close):
+    def obstacle(self):
         """
-        Ermittelt Abstand und unterbricht bei Wert < "too_close"
+        Ermittelt Abstand und unterbricht bei Wert < "abstand"
         """
-        #self.global_data =[] 
+        
         while True:
-            bc.bk.time.sleep(0.1)
+            time.sleep(0.1)
             dist = self.us.distance()
             data = self.driving_data(dist)
             self.global_data.append(data)
-            if dist > 0 and dist < too_close:
+            if dist > 0 and dist <= self.abstand:
                 print("Achtung!", dist, "cm")
                 self.stop()
                 break
@@ -72,38 +68,52 @@ class SonicCar(bc.BaseCar):
    
 
     def Fahrparcours_3(self) -> None:        
-        self.drive(60, 1, 90)
-        #self.too_close = -4
+        self.drive(50, 1, 90)
+        
         print(self.speed)
-        print(type(self.speed))
-        self.mt_too_close(self.speed)
-        #too_close = self.speed/3
-        #print(self.too_close)
-        self.obstacle(self.too_close)
+        self.obstacle()
 
-    def RV(self) -> None:        
-        self.drive(30, -1, 135)
-        for i in range(20):
+    def RW(self) -> None:        
+         self.drive(30, -1, 135)
+         for i in range(30):
+             time.sleep(0.1)
+             dist = self.us.distance()
+             data = self.driving_data(dist)
+             self.global_data.append(data)
+
+    def FW_slow(self) -> None:   
+        self.drive(30, 1, 90)
+        for i in range(40):
             time.sleep(0.1)
-
             dist = self.us.distance()
             data = self.driving_data(dist)
-            self.global_data.append(data)           
-        
+            self.global_data.append(data)
 
-    def Fahrparcours_4(self) -> None:   
-        #self.data_rec()
+        self.drive(30, 1, 135)
+        for i in range(20):
+            time.sleep(0.1)
+            dist = self.us.distance()
+            data = self.driving_data(dist)
+            self.global_data.append(data)
+
+        self.drive(30, 1, 45)
+        for i in range(20):
+            time.sleep(0.1)
+            dist = self.us.distance()
+            data = self.driving_data(dist)
+            self.global_data.append(data)   
+
+    def Fahrparcours_4(self) -> None:
+        #while True:
+        self.abstand = self.abstand
+        self.Fahrparcours_3()  
+        self.RW()
+        #self.FW_slow() 
         self.Fahrparcours_3()
-        #self.drive(30, -1, 135)
-        self.RV()
-        #time.sleep(2)
-        #self.stop()        
-        self.Fahrparcours_3()
-        #self.drive(30, 1, 90)
+        
         
 def main():
-    
-    sc = SonicCar()
+    sc = SonicCar(6)
     sc.Fahrparcours_4()
     sc.write_to_csv()
 
