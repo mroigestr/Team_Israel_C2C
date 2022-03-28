@@ -104,13 +104,13 @@ class SonicCar(bc.BaseCar):
             self.global_data.append(data)   
 
     def Fahrparcours_4(self) -> None:
-        while True:
-            self.abstand = self.abstand
-            self.Fahrparcours_3()  
-            self.RW()
-            #self.FW_slow() 
-            self.Fahrparcours_3()
-        
+        # while True:
+        self.abstand = self.abstand
+        self.Fahrparcours_3()  
+        self.RW()
+        #self.FW_slow() 
+        self.Fahrparcours_3()
+    
         
 def main():
     sc = SonicCar(6)

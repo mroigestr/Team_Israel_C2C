@@ -170,7 +170,7 @@ class BaseCar(object):
            
         self.drive(40, 1, 135)
         print('{} speed : {}, steering angle : {}'.format("forward" if self.direction == 1 else "backward", self.speed, self.steering_angle))
-        bk.time.sleep(t*8)
+        bk.time.sleep(t*3)
         
        # Stop 
                
@@ -182,7 +182,7 @@ class BaseCar(object):
     
         self.drive(40, -1, 135)
         print('{} speed : {}, steering angle : {}'.format("forward" if self.direction == 1 else "backward", self.speed, self.steering_angle))
-        bk.time.sleep(t*8)
+        bk.time.sleep(t*3)
 
         # 1 Sek geradeaus rückwärts
         
