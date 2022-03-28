@@ -1,4 +1,5 @@
 import basisklassen as bk
+import json
 
 class BaseCar(object):
 
@@ -27,6 +28,23 @@ class BaseCar(object):
         self._steering_angle = 90
         self.bw = bk.Back_Wheels()
         self.fw = bk.Front_Wheels()
+        self.forward_A = 0
+        self.forward_B = 0
+        self.turning_offset = 0
+        self.car_calibration()
+
+
+    def car_calibration(self):
+        with open("config.json", "r") as f:
+            data = json.load(f)
+            self.turning_offset = data["turning_offset"]
+            self.forward_A = data["forward_A"]
+            self.forward_B = data["forward_B"]
+            print("Test der Lenkkalibrierung in config.json")
+            print("Turning Offset: ", self.turning_offset)
+            print("Forward A: ", self.forward_A)
+            print("Forward B: ", self.forward_B)
+
 
     @property    
     def speed(self):
@@ -59,6 +77,7 @@ class BaseCar(object):
         Returns:
             int: steering angle.
         """
+        
         return self._steering_angle
 
     @steering_angle.setter
@@ -70,7 +89,9 @@ class BaseCar(object):
         Args:
             steering_angle (int): steering angle of the front wheels.
         """
-        self._steering_angle = steering_angle
+        self._steering_angle = steering_angle + self.turning_offset
+        print("Lenkwinkel: ",steering_angle)
+        #print(self.turning_offset)
     
     @property    
     def direction(self):
