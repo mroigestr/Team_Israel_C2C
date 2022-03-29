@@ -14,7 +14,10 @@ class SensorCar(sc.SonicCar):
 
     def __init__(self):
         self.ir = bk.Infrared()
-        self.ir.cali_references()
+        ir_sens_cali = input("IR-Sensoren kalibrireren? [j/n]: ")
+        if ir_sens_cali == "j":
+            self.ir.cali_references()
+            self.write_to_csv()
         # print("In def __init__")
         # print(self.ir._references)
 
@@ -32,8 +35,7 @@ class SensorCar(sc.SonicCar):
 
 def main():
     irCar = SensorCar()
-    irCar.write_to_csv()
-    # print(irCar.background)
+
 
 if __name__ == '__main__':
     main()
