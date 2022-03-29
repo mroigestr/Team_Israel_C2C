@@ -16,10 +16,9 @@ class SensorCar(sc.SonicCar):
         self.ir = bk.Infrared()
         ir_sens_cali = input("IR-Sensoren kalibrireren? [j/n]: ")
         if ir_sens_cali == "j":
+            self.ir_sens = input("IR-Poti stellen und eingeben [1...3]: ")
             self.ir.cali_references()
-            self.write_to_csv()
-        # print("In def __init__")
-        # print(self.ir._references)
+            # self.write_to_csv()
 
     def write_to_csv(self):
         # Referenzwerte ermitteln mit weißem Background und schwarzer Line in der Mitte.
@@ -27,10 +26,12 @@ class SensorCar(sc.SonicCar):
         # headerList = ["Sens", "D2", "D3", "D4", "D5", "D6", "Faktor"]
         with open("IR-Ref.csv", mode ='a') as log_file:
             write = csv.writer(log_file)
-            ir_sens = input("IR-Poti [1...3]: ")
             # write.writerow(headerList)
             ir_sens_fact = self.ir._references[2] / self.ir._references[0]
-            write.writerow([ir_sens, self.ir._references, ir_sens_fact])
+            write.writerow([self.ir_sens, self.ir._references, ir_sens_fact])
+
+    # def steer_line(self):
+    #     self.ir.read_digital()
 
 
 def main():
