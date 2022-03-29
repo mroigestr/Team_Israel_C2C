@@ -45,8 +45,21 @@ class SensorCar(sc.SonicCar):
 
 def main():
     irCar = SensorCar()
-    input()
+    input("1. Sensor (von links ab)")
     print(irCar.ir.read_digital())
+    print(irCar.ir.read_analog())
+    input("2. Sensor (von links ab)")
+    print(irCar.ir.read_digital())
+    print(irCar.ir.read_analog())
+    input("3. Sensor (von links ab)")
+    print(irCar.ir.read_digital())
+    print(irCar.ir.read_analog())
+    input("4. Sensor (von links ab)")
+    print(irCar.ir.read_digital())
+    print(irCar.ir.read_analog())
+    input("5. Sensor (von links ab)")
+    print(irCar.ir.read_digital())
+    print(irCar.ir.read_analog())
 
 
 if __name__ == '__main__':
