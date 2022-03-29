@@ -16,6 +16,7 @@ class SensorCar(sc.SonicCar):
     def __init__(self):
         self.ir = bk.Infrared()
         self.us = bk.Ultrasonic()
+        self.dir = bk.Front_Wheels()
         ir_sens_cali = input("IR-Sensoren kalibrireren? [j/n]: ")
         if ir_sens_cali == "j":
             self.ir_sens = input("IR-Poti stellen und eingeben [1...3]: ")
@@ -35,31 +36,65 @@ class SensorCar(sc.SonicCar):
     # def steer_line(self):
     #     self.ir.read_digital()
 
-"""    def Fahrparcours_5(self) -> None:
+    def test_sensoren(self):
+        antwort = input('Sensoren testen?[j/n]: ')
+        if antwort == "j":
+            input("1. Sensor (von links ab)")
+            print(self.ir.read_digital())
+            print(self.ir.read_analog())
+            input("2. Sensor (von links ab)")
+            print(self.ir.read_digital())
+            print(self.ir.read_analog())
+            input("3. Sensor (von links ab)")
+            print(self.ir.read_digital())
+            print(self.ir.read_analog())
+            input("4. Sensor (von links ab)")
+            print(self.ir.read_digital())
+            print(self.ir.read_analog())
+            input("5. Sensor (von links ab)")
+            print(self.ir.read_digital())
+            print(self.ir.read_analog())
+        
+
+    def Fahrparcours_5(self):
         while True:
             self.drive(10, 1, 90)
-            sensor_lesen
-            turn()"""
-        
-       
+            ist_stand_sensoren = self.ir.read_digital()
+            soll_stand_sensoren = [0, 0, 1, 0, 0]
+            """
+            insgesamt 2**5 = 32 mögliche ausgaben
+            Fall_1 --> [1, 0, 0, 0, 0] ---> links abbiegen --> lenkwinkel auf 45 setzen
+            ...
+            Fall_3 --> [0, 0, 1, 0, 0] --> geradeaus fahren -->lenkwinkel auf 90 setzen 
+            ...
+            Fall_5 --> [0, 0, 0, 0, 1] ---> rechts abbiegen --> lenkwikel auf 135 setzen
+            """
+            dict_infrared_werte = {}
+             
+            for i in range(32):
+                bnr = (bin(i).replace('0b',''))
+                x = bnr[::-1]
+                while len(x) < 5:
+                    x += '0'
+                bnr = x[::-1]
+                dict_infrared_werte[bnr] = "Fall {}".format(i+1)
 
 def main():
     irCar = SensorCar()
-    input("1. Sensor (von links ab)")
-    print(irCar.ir.read_digital())
-    print(irCar.ir.read_analog())
-    input("2. Sensor (von links ab)")
-    print(irCar.ir.read_digital())
-    print(irCar.ir.read_analog())
-    input("3. Sensor (von links ab)")
-    print(irCar.ir.read_digital())
-    print(irCar.ir.read_analog())
-    input("4. Sensor (von links ab)")
-    print(irCar.ir.read_digital())
-    print(irCar.ir.read_analog())
-    input("5. Sensor (von links ab)")
-    print(irCar.ir.read_digital())
-    print(irCar.ir.read_analog())
+    irCar.test_sensoren()
+    dict_infrared_werte = {}
+             
+    for i in range(32):
+        bnr = (bin(i).replace('0b',''))
+        x = bnr[::-1]
+        while len(x) < 5:
+            x += '0'
+        bnr = x[::-1]
+        dict_infrared_werte[bnr] = "Fall {}".format(i+1)
+
+    print(dict_infrared_werte)
+
+
 
 
 if __name__ == '__main__':
