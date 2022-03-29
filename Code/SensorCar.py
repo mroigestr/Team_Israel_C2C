@@ -57,42 +57,64 @@ class SensorCar(sc.SonicCar):
         
 
     def Fahrparcours_5(self):
-        while True:
-            self.drive(10, 1, 90)
-            ist_stand_sensoren = self.ir.read_digital()
-            soll_stand_sensoren = [0, 0, 1, 0, 0]
-            """
+       # while True:
+       # self.drive(10, 1, 90)
+        ist_stand_sensoren = self.ir.read_digital()
+       # ist_stand_sensoren = str(ist_stand_sensoren)
+        #ist_stand_sensoren_string = ' '.join(ist_stand_sensoren)
+       # print(ist_stand_sensoren_string)
+        ist_stand_sensoren_string = ''
+        for i in ist_stand_sensoren:
+            ist_stand_sensoren_string += str(i)
+        print(ist_stand_sensoren_string)
+        
+        sens_werte = self.ir.read_digital() #[1, 0, 0, 0, 1]  
+        lenkwinkel = sens_werte[0]*(-45) + sens_werte[1]*(-22) + sens_werte[2]*0 + sens_werte[3]*22 + sens_werte[4]*45
+        if lenkwinkel > 45:
+            lenkwinkel = 45
+        elif lenkwinkel < -45:
+            lenkwinkel = -45
+        lenkwinkel = lenkwinkel + 90
+
+        
+
+        """for sensor_wert in ist_stand_sensoren:
+            ist_stand_sensoren_string = ist_stand_sensoren_string + """
+        soll_stand_sensoren = [0, 0, 1, 0, 0]
+        """
             insgesamt 2**5 = 32 mögliche ausgaben
             Fall_1 --> [1, 0, 0, 0, 0] ---> links abbiegen --> lenkwinkel auf 45 setzen
             ...
             Fall_3 --> [0, 0, 1, 0, 0] --> geradeaus fahren -->lenkwinkel auf 90 setzen 
             ...
             Fall_5 --> [0, 0, 0, 0, 1] ---> rechts abbiegen --> lenkwikel auf 135 setzen
-            """
-            dict_infrared_werte = {}
-             
-            for i in range(32):
-                bnr = (bin(i).replace('0b',''))
-                x = bnr[::-1]
-                while len(x) < 5:
-                    x += '0'
-                bnr = x[::-1]
-                dict_infrared_werte[bnr] = "Fall {}".format(i+1)
+        """
+        dict_infrared_werte = {}
+        for i in range(32):
+            bnr = (bin(i).replace('0b',''))
+            x = bnr[::-1]
+            while len(x) < 5:
+                x += '0'
+            bnr = x[::-1]
+            dict_infrared_werte[bnr] = "Fall {}".format(i+1)
+    #        list_werte.append(bnr)
+        print(dict_infrared_werte[ist_stand_sensoren_string])
+
+        
 
 def main():
     irCar = SensorCar()
     irCar.test_sensoren()
-    dict_infrared_werte = {}
+    irCar.Fahrparcours_5()
+    
+    
              
-    for i in range(32):
-        bnr = (bin(i).replace('0b',''))
-        x = bnr[::-1]
-        while len(x) < 5:
-            x += '0'
-        bnr = x[::-1]
-        dict_infrared_werte[bnr] = "Fall {}".format(i+1)
 
-    print(dict_infrared_werte)
+"""    list_werte.sort()
+    list_werte.append(list_werte)
+    for 
+    for i in list_werte:
+       print(i)"""
 
 
 
