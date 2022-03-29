@@ -1,3 +1,4 @@
+from lib2to3.pgen2 import driver
 import SonicCar as sc
 import basisklassen as bk
 import csv
@@ -14,6 +15,7 @@ class SensorCar(sc.SonicCar):
 
     def __init__(self):
         self.ir = bk.Infrared()
+        self.us = bk.Ultrasonic()
         ir_sens_cali = input("IR-Sensoren kalibrireren? [j/n]: ")
         if ir_sens_cali == "j":
             self.ir_sens = input("IR-Poti stellen und eingeben [1...3]: ")
@@ -33,9 +35,18 @@ class SensorCar(sc.SonicCar):
     # def steer_line(self):
     #     self.ir.read_digital()
 
+"""    def Fahrparcours_5(self) -> None:
+        while True:
+            self.drive(10, 1, 90)
+            sensor_lesen
+            turn()"""
+        
+       
 
 def main():
     irCar = SensorCar()
+    input()
+    print(irCar.ir.read_digital())
 
 
 if __name__ == '__main__':
