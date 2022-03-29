@@ -2,6 +2,8 @@ from lib2to3.pgen2 import driver
 import SonicCar as sc
 import basisklassen as bk
 import csv
+import time
+#import BaseCar as bc
 
 class SensorCar(sc.SonicCar):
 
@@ -16,7 +18,10 @@ class SensorCar(sc.SonicCar):
     def __init__(self):
         self.ir = bk.Infrared()
         self.us = bk.Ultrasonic()
-        self.dir = bk.Front_Wheels()
+        self.fw = bk.Front_Wheels()
+        self.bw = bk.Back_Wheels()
+        self.turning_offset = 0
+
         ir_sens_cali = input("IR-Sensoren kalibrireren? [j/n]: ")
         if ir_sens_cali == "j":
             self.ir_sens = input("IR-Poti stellen und eingeben [1...3]: ")
@@ -57,25 +62,29 @@ class SensorCar(sc.SonicCar):
         
 
     def Fahrparcours_5(self):
-       # while True:
-       # self.drive(10, 1, 90)
-        ist_stand_sensoren = self.ir.read_digital()
-       # ist_stand_sensoren = str(ist_stand_sensoren)
-        #ist_stand_sensoren_string = ' '.join(ist_stand_sensoren)
-       # print(ist_stand_sensoren_string)
-        ist_stand_sensoren_string = ''
-        for i in ist_stand_sensoren:
-            ist_stand_sensoren_string += str(i)
-        print(ist_stand_sensoren_string)
         
-        sens_werte = self.ir.read_digital() #[1, 0, 0, 0, 1]  
-        lenkwinkel = sens_werte[0]*(-45) + sens_werte[1]*(-22) + sens_werte[2]*0 + sens_werte[3]*22 + sens_werte[4]*45
-        if lenkwinkel > 45:
-            lenkwinkel = 45
-        elif lenkwinkel < -45:
-            lenkwinkel = -45
-        lenkwinkel = lenkwinkel + 90
+        while self.us.distance() > 5 or self.us.distance() < 0:
+        
+    #     ist_stand_sensoren = self.ir.read_digital()
+    #    # ist_stand_sensoren = str(ist_stand_sensoren)
+    #     #ist_stand_sensoren_string = ' '.join(ist_stand_sensoren)
+    #    # print(ist_stand_sensoren_string)
+    #     ist_stand_sensoren_string = ''
+    #     for i in ist_stand_sensoren:
+    #         ist_stand_sensoren_string += str(i)
+    #     print(ist_stand_sensoren_string)
+        
+            sens_werte = self.ir.read_digital() #[1, 0, 0, 0, 1]  
+            lenkwinkel = sens_werte[0]*(-45) + sens_werte[1]*(-22) + sens_werte[2]*0 + sens_werte[3]*22 + sens_werte[4]*45
+            if lenkwinkel > 45:
+                lenkwinkel = 45
+            elif lenkwinkel < -45:
+                lenkwinkel = -45
+            lenkwinkel = lenkwinkel + 90
 
+            self.drive(30, 1, lenkwinkel)
+            time.sleep(2)
+        
         
 
         """for sensor_wert in ist_stand_sensoren:
