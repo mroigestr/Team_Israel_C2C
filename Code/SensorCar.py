@@ -100,18 +100,22 @@ class SensorCar(sc.SonicCar):
             Auto ohne ausgleichende Fahrmanöver fahren kann.
             Zusätzlich: Hindernis-Erkennung & Stop des Fahrzeugs
         """
-        
+        count_sum_sens_0 = 0
+
         while self.us.distance() > 5 or self.us.distance() < 0:
-        
+            print(count_sum_sens_0)
             
             sens_werte = self.ir.read_digital() #[1, 1, 0, 1, 0]  
             # print(sens_werte)
             # print(sum(sens_werte))
             if sum(sens_werte) != 0:
                 lenkw_norm = (sens_werte[0]*(-1) + sens_werte[1]*(-0.5) + sens_werte[2]*0 + sens_werte[3]*0.5 + sens_werte[4]*1) / sum(sens_werte)
+                count_sum_sens_0 = 0
             else:
                 lenkw_norm = 0
-                break
+                count_sum_sens_0 += 1
+                if count_sum_sens_0 > 10:
+                    break
             # print(lenkw_norm)
 
             lenkw_max = 45
@@ -119,12 +123,19 @@ class SensorCar(sc.SonicCar):
 
             self.drive(30, 1, lenkwinkel)
             time.sleep(0.02)
-            
-        
-        
-
+         
         
         self.stop()  
+    
+    def Fahrparcours_6(self):
+        """
+            Fahrparcours 5 ‑ Linienverfolgung : Folgen einer etwas 1,5 bis 2 cm breiten Linie auf
+            dem Boden. Das Auto soll stoppen, sobald das Auto das Ende der Linie erreicht hat. Als
+            Test soll eine Linie genutzt werden, die sowohl eine Rechts‑ als auch eine Linkskurve
+            macht. Die Kurvenradien sollen deutlich größer sein als der maximale Radius, den das
+            Auto ohne ausgleichende Fahrmanöver fahren kann.
+            Zusätzlich: Hindernis-Erkennung & Stop des Fahrzeugs
+        """
 
 def main():
     irCar = SensorCar()
