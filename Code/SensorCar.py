@@ -104,6 +104,10 @@ class SensorCar(sc.SonicCar):
         """
         count_sum_sens_0 = 0
         dist_radar = self.us.distance()
+
+        if dist_radar < 2 and dist_radar > 0: # Stoppen von Hand mit kleinem Abstand vor US-Sensoren
+            self.stop()
+
         while dist_radar > 5 or dist_radar < 0:
         #while True:
             print(count_sum_sens_0)
@@ -139,8 +143,8 @@ class SensorCar(sc.SonicCar):
             Stoppen (evtl. schon passiert), gegenlenken, zurücksetzen, gegenlenken, weiterfahren
         """
         while True:
-            self.Fahrparcours_5()
-            if self.lenkw_norm > 0: # Gegenlenken mit "-1"
+            self.Fahrparcours_5()   # Ausgang aus FP_5 mit Abbruch "Spur verloren" oder "Hindernis"
+            if self.lenkw_norm > 0: # Gegenlenken mit max. Lenkeinschlag in Gegenrichtung
                 lenkwinkel = self.lenkw_max * (-1) + 90
             else:
                 lenkwinkel = self.lenkw_max * (+1) + 90
