@@ -26,36 +26,35 @@ class SensorCar(sc.SonicCar):
         self.bw = bk.Back_Wheels()
         self.turning_offset = 0
 
-        
-
-        # ir_sens_cali = input("IR-Sensoren kalibrireren? [j/n]: ")
-        # if ir_sens_cali == "j":
-        #     self.ir_sens = input("IR-Poti stellen und eingeben [1...3]: ")
-        #     self.ir.cali_references()
-        #     # self.write_to_csv()
-
-    
+            
     def IR_poti_setting(self):
-            while True:
-                self.ir_sens = input("Bitte Poti einstellen und Wert des Potis eingeben: ")
-                self.ir = bk.Infrared()
+        """
+            Einstellung des IR-Potis über Verstellschraube
+            Ermittlung der Referenzwerte mit weißem und schwarzem Background
+            Übergabe der Werte an write_to_csv
+        """
+        while True:
+            self.ir_sens = input("Bitte Poti einstellen und Wert des Potis eingeben: ")
+            self.ir = bk.Infrared()
 
-                input('Place on background and start measurement:')
-                self.background = self.ir.get_average(100)
-                print('measured background:', self.background)
-                input('Place on line and start measurement:')
-                self.line = self.ir.get_average(100)
-                print('measured line:', self.line)
-                self.write_to_csv(self.ir_sens,self.background,self.line)
-                stat_cal = input("Weitere Kalibrierungs-Messung? [j/n]")
-                if stat_cal == "n":
-                    break
+            input('Place on background and start measurement:')
+            self.background = self.ir.get_average(100)
+            print('measured background:', self.background)
+            input('Place on line and start measurement:')
+            self.line = self.ir.get_average(100)
+            print('measured line:', self.line)
+            self.write_to_csv(self.ir_sens,self.background,self.line)
+            stat_cal = input("Weitere Kalibrierungs-Messung? [j/n]")
+            if stat_cal == "n":
+                break
 
     
     def write_to_csv(self,ir_sens, background,line):
-        # Referenzwerte ermitteln mit weißem Background und schwarzer Line in der Mitte.
-        # Schreibt Poti-Stellung, Sensorwerte und Faktor zwischen Rand- und Mittelsensor.
-        # headerList = ["Sens", "D2", "D3", "D4", "D5", "D6", "Faktor"]
+        """
+            Übernimmt Poti-Stellung und Referenzwerte mit weißem und schwarzem Background
+            Ermittelt Faktor der Sensorsummenwerte
+            Schreibt Poti-Stellung, Sensorwerte weißer & schwarzer Background und Faktor Sensorsummenwerte.
+        """
         with open("IR-Ref.csv", mode ='a') as log_file:
             write = csv.writer(log_file)
             sum_background = 0
@@ -63,15 +62,16 @@ class SensorCar(sc.SonicCar):
             for i in range(5):
                 sum_background += background[i]
                 sum_line += line[i]
-            ir_sens_fact =sum_background/sum_line #self.ir._references[2] / self.ir._references[0]
+            ir_sens_fact =sum_background/sum_line 
             write.writerow([ir_sens, background, line, ir_sens_fact])
-            print("CSV-Datei geschrieben")
-            #write.writerow([ir_sens,background,line,ir_sens_fact])
+            # print("CSV-Datei geschrieben")
 
-    # def steer_line(self):
-    #     self.ir.read_digital()
 
     def test_sensoren(self):
+        """
+            Test der IR-Sensoren mit aktuellen Poti-Einstellungen
+            Ziel: Erkennung der Linie am entsprechenden IR-Sensor
+        """
         antwort = input('Sensoren testen?[j/n]: ')
         if antwort == "j":
             input("1. Sensor (von links ab)")
@@ -92,55 +92,39 @@ class SensorCar(sc.SonicCar):
         
 
     def Fahrparcours_5(self):
+        """
+            Fahrparcours 5 ‑ Linienverfolgung : Folgen einer etwas 1,5 bis 2 cm breiten Linie auf
+            dem Boden. Das Auto soll stoppen, sobald das Auto das Ende der Linie erreicht hat. Als
+            Test soll eine Linie genutzt werden, die sowohl eine Rechts‑ als auch eine Linkskurve
+            macht. Die Kurvenradien sollen deutlich größer sein als der maximale Radius, den das
+            Auto ohne ausgleichende Fahrmanöver fahren kann.
+            Zusätzlich: Hindernis-Erkennung & Stop des Fahrzeugs
+        """
         
         while self.us.distance() > 5 or self.us.distance() < 0:
         
-    #     ist_stand_sensoren = self.ir.read_digital()
-    #    # ist_stand_sensoren = str(ist_stand_sensoren)
-    #     #ist_stand_sensoren_string = ' '.join(ist_stand_sensoren)
-    #    # print(ist_stand_sensoren_string)
-    #     ist_stand_sensoren_string = ''
-    #     for i in ist_stand_sensoren:
-    #         ist_stand_sensoren_string += str(i)
-    #     print(ist_stand_sensoren_string)
-        
-            sens_werte = self.ir.read_digital() #[1, 0, 0, 0, 1]  
-            lenkwinkel = sens_werte[0]*(-45) + sens_werte[1]*(-22) + sens_werte[2]*0 + sens_werte[3]*22 + sens_werte[4]*45
-            if lenkwinkel > 45:
-                lenkwinkel = 45
-            elif lenkwinkel < -45:
-                lenkwinkel = -45
-            lenkwinkel = lenkwinkel + 90
+            
+            sens_werte = self.ir.read_digital() #[1, 1, 0, 1, 0]  
+            # print(sens_werte)
+            # print(sum(sens_werte))
+            if sum(sens_werte) != 0:
+                lenkw_norm = (sens_werte[0]*(-1) + sens_werte[1]*(-0.5) + sens_werte[2]*0 + sens_werte[3]*0.5 + sens_werte[4]*1) / sum(sens_werte)
+            else:
+                lenkw_norm = 0
+                break
+            # print(lenkw_norm)
+
+            lenkw_max = 45
+            lenkwinkel = lenkw_norm*lenkw_max + 90
 
             self.drive(30, 1, lenkwinkel)
             time.sleep(0.02)
+            
         
         
 
-        """for sensor_wert in ist_stand_sensoren:
-            ist_stand_sensoren_string = ist_stand_sensoren_string + """
-        soll_stand_sensoren = [0, 0, 1, 0, 0]
-        """
-            insgesamt 2**5 = 32 mögliche ausgaben
-            Fall_1 --> [1, 0, 0, 0, 0] ---> links abbiegen --> lenkwinkel auf 45 setzen
-            ...
-            Fall_3 --> [0, 0, 1, 0, 0] --> geradeaus fahren -->lenkwinkel auf 90 setzen 
-            ...
-            Fall_5 --> [0, 0, 0, 0, 1] ---> rechts abbiegen --> lenkwikel auf 135 setzen
-        """
-        """
-            dict_infrared_werte = {}
-            for i in range(32):
-                bnr = (bin(i).replace('0b',''))
-                x = bnr[::-1]
-                while len(x) < 5:
-                    x += '0'
-                bnr = x[::-1]
-                dict_infrared_werte[bnr] = "Fall {}".format(i+1)
-        #        list_werte.append(bnr)
-            print(dict_infrared_werte[ist_stand_sensoren_string])
-        """
         
+        self.stop()  
 
 def main():
     irCar = SensorCar()
@@ -149,14 +133,6 @@ def main():
     
     
              
-
-"""    list_werte.sort()
-    list_werte.append(list_werte)
-    for 
-    for i in list_werte:
-       print(i)"""
-
-
 
 
 if __name__ == '__main__':
