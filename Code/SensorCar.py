@@ -101,10 +101,11 @@ class SensorCar(sc.SonicCar):
             Zusätzlich: Hindernis-Erkennung & Stop des Fahrzeugs
         """
         count_sum_sens_0 = 0
-
-        while self.us.distance() > 5 or self.us.distance() < 0:
+        dist_radar = self.us.distance()
+        while dist_radar > 5 or dist_radar < 0:
+        #while True:
             print(count_sum_sens_0)
-            
+            print(dist_radar)
             sens_werte = self.ir.read_digital() #[1, 1, 0, 1, 0]  
             # print(sens_werte)
             # print(sum(sens_werte))
@@ -112,6 +113,7 @@ class SensorCar(sc.SonicCar):
                 lenkw_norm = (sens_werte[0]*(-1) + sens_werte[1]*(-0.5) + sens_werte[2]*0 + sens_werte[3]*0.5 + sens_werte[4]*1) / sum(sens_werte)
                 count_sum_sens_0 = 0
             else:
+                print("Spur verloren")
                 lenkw_norm = 0
                 count_sum_sens_0 += 1
                 if count_sum_sens_0 > 10:
@@ -123,7 +125,8 @@ class SensorCar(sc.SonicCar):
 
             self.drive(30, 1, lenkwinkel)
             time.sleep(0.02)
-         
+            dist_radar = self.us.distance()
+        print(dist_radar)
         
         self.stop()  
     
