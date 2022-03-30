@@ -1,6 +1,6 @@
 from lib2to3.pgen2 import driver
-import basisklassen as bk
 import SonicCar as sc
+import basisklassen as bk
 import csv
 import time
 #import BaseCar as bc
@@ -16,8 +16,6 @@ class SensorCar(sc.SonicCar):
     """
 
     def __init__(self):
-        self.lenkw_max = 45
-        self.lenkw_norm = 0
         poti_set = input("Poti-Einstellung erforderlich? [j/n]")
         if poti_set == "j":
             self.IR_poti_setting()
@@ -112,19 +110,20 @@ class SensorCar(sc.SonicCar):
             # print(sens_werte)
             # print(sum(sens_werte))
             if sum(sens_werte) != 0:
-                self.lenkw_norm = (sens_werte[0]*(-1) + sens_werte[1]*(-0.5) + sens_werte[2]*0 + sens_werte[3]*0.5 + sens_werte[4]*1) / sum(sens_werte)
+                lenkw_norm = (sens_werte[0]*(-1) + sens_werte[1]*(-0.5) + sens_werte[2]*0 + sens_werte[3]*0.5 + sens_werte[4]*1) / sum(sens_werte)
                 count_sum_sens_0 = 0
             else:
                 print("Spur verloren")
-                # lenkw_norm = 0
+                lenkw_norm = 0
                 count_sum_sens_0 += 1
-                if count_sum_sens_0 > 5:
+                if count_sum_sens_0 > 10:
                     break
             # print(lenkw_norm)
 
-            lenkwinkel = self.lenkw_norm*self.lenkw_max + 90
+            lenkw_max = 45
+            lenkwinkel = lenkw_norm*lenkw_max + 90
 
-            self.drive(20, 1, lenkwinkel)
+            self.drive(30, 1, lenkwinkel)
             time.sleep(0.02)
             dist_radar = self.us.distance()
         print(dist_radar)
@@ -133,28 +132,22 @@ class SensorCar(sc.SonicCar):
     
     def Fahrparcours_6(self):
         """
-            Fahrparcours 6 ‑ Erweiterte Linienverfolgung: Folgen eine Linie, die sowohl eine
-            Rechts‑ als auch eine Linkskurve macht mit Kurvenradien kleiner als der maximale
-            Lenkwinkel.
-            Stoppen (evtl. schon passiert), gegenlenken, zurücksetzen, gegenlenken, weiterfahren
+            Fahrparcours 5 ‑ Linienverfolgung : Folgen einer etwas 1,5 bis 2 cm breiten Linie auf
+            dem Boden. Das Auto soll stoppen, sobald das Auto das Ende der Linie erreicht hat. Als
+            Test soll eine Linie genutzt werden, die sowohl eine Rechts‑ als auch eine Linkskurve
+            macht. Die Kurvenradien sollen deutlich größer sein als der maximale Radius, den das
+            Auto ohne ausgleichende Fahrmanöver fahren kann.
+            Zusätzlich: Hindernis-Erkennung & Stop des Fahrzeugs
         """
-        while True:
-            self.Fahrparcours_5()
-            if self.lenkw_norm > 0: # Gegenlenken mit "-1"
-                lenkwinkel = self.lenkw_max * (-1) + 90
-            else:
-                lenkwinkel = self.lenkw_max * (+1) + 90
-            self.drive(20, -1, lenkwinkel)
-            time.sleep(0.2)
-            self.stop()
-
 
 def main():
     irCar = SensorCar()
     irCar.test_sensoren()
-    # irCar.Fahrparcours_5()
-    irCar.Fahrparcours_6()
+    irCar.Fahrparcours_5()
     
     
+             
+
+
 if __name__ == '__main__':
     main()
