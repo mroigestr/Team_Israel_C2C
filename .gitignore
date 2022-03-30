@@ -1,3 +1,4 @@
 # config-Datei
 *.json
 Test1.txt
+*.pyc
