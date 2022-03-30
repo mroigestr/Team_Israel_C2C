@@ -16,27 +16,57 @@ class SensorCar(sc.SonicCar):
     """
 
     def __init__(self):
+        poti_set = input("Poti-Einstellung erforderlich? [j/n]")
+        if poti_set == "j":
+            self.IR_poti_setting()
         self.ir = bk.Infrared()
+        self.ir.cali_references()
         self.us = bk.Ultrasonic()
         self.fw = bk.Front_Wheels()
         self.bw = bk.Back_Wheels()
         self.turning_offset = 0
 
-        ir_sens_cali = input("IR-Sensoren kalibrireren? [j/n]: ")
-        if ir_sens_cali == "j":
-            self.ir_sens = input("IR-Poti stellen und eingeben [1...3]: ")
-            self.ir.cali_references()
-            # self.write_to_csv()
+        
 
-    def write_to_csv(self):
+        # ir_sens_cali = input("IR-Sensoren kalibrireren? [j/n]: ")
+        # if ir_sens_cali == "j":
+        #     self.ir_sens = input("IR-Poti stellen und eingeben [1...3]: ")
+        #     self.ir.cali_references()
+        #     # self.write_to_csv()
+
+    
+    def IR_poti_setting(self):
+            while True:
+                self.ir_sens = input("Bitte Poti einstellen und Wert des Potis eingeben: ")
+                self.ir = bk.Infrared()
+
+                input('Place on background and start measurement:')
+                self.background = self.ir.get_average(100)
+                print('measured background:', self.background)
+                input('Place on line and start measurement:')
+                self.line = self.ir.get_average(100)
+                print('measured line:', self.line)
+                self.write_to_csv(self.ir_sens,self.background,self.line)
+                stat_cal = input("Weitere Kalibrierungs-Messung? [j/n]")
+                if stat_cal == "n":
+                    break
+
+    
+    def write_to_csv(self,ir_sens, background,line):
         # Referenzwerte ermitteln mit weißem Background und schwarzer Line in der Mitte.
         # Schreibt Poti-Stellung, Sensorwerte und Faktor zwischen Rand- und Mittelsensor.
         # headerList = ["Sens", "D2", "D3", "D4", "D5", "D6", "Faktor"]
         with open("IR-Ref.csv", mode ='a') as log_file:
             write = csv.writer(log_file)
-            # write.writerow(headerList)
-            ir_sens_fact = self.ir._references[2] / self.ir._references[0]
-            write.writerow([self.ir_sens, self.ir._references, ir_sens_fact])
+            sum_background = 0
+            sum_line = 0
+            for i in range(5):
+                sum_background += background[i]
+                sum_line += line[i]
+            ir_sens_fact =sum_background/sum_line #self.ir._references[2] / self.ir._references[0]
+            write.writerow([ir_sens, background, line, ir_sens_fact])
+            print("CSV-Datei geschrieben")
+            #write.writerow([ir_sens,background,line,ir_sens_fact])
 
     # def steer_line(self):
     #     self.ir.read_digital()
@@ -83,7 +113,7 @@ class SensorCar(sc.SonicCar):
             lenkwinkel = lenkwinkel + 90
 
             self.drive(30, 1, lenkwinkel)
-            time.sleep(2)
+            time.sleep(0.02)
         
         
 
@@ -98,17 +128,18 @@ class SensorCar(sc.SonicCar):
             ...
             Fall_5 --> [0, 0, 0, 0, 1] ---> rechts abbiegen --> lenkwikel auf 135 setzen
         """
-        dict_infrared_werte = {}
-        for i in range(32):
-            bnr = (bin(i).replace('0b',''))
-            x = bnr[::-1]
-            while len(x) < 5:
-                x += '0'
-            bnr = x[::-1]
-            dict_infrared_werte[bnr] = "Fall {}".format(i+1)
-    #        list_werte.append(bnr)
-        print(dict_infrared_werte[ist_stand_sensoren_string])
-
+        """
+            dict_infrared_werte = {}
+            for i in range(32):
+                bnr = (bin(i).replace('0b',''))
+                x = bnr[::-1]
+                while len(x) < 5:
+                    x += '0'
+                bnr = x[::-1]
+                dict_infrared_werte[bnr] = "Fall {}".format(i+1)
+        #        list_werte.append(bnr)
+            print(dict_infrared_werte[ist_stand_sensoren_string])
+        """
         
 
 def main():
