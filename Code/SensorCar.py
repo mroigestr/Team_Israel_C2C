@@ -1,9 +1,10 @@
 import basisklassen as bk
-# import BaseCar as bc
 import SonicCar as sc
 import csv
 import time
-# from lib2to3.pgen2 import driver
+import os.path
+import numpy
+
 
 class SensorCar(sc.SonicCar):
     """
@@ -23,41 +24,63 @@ class SensorCar(sc.SonicCar):
         poti_set = input("Poti-Einstellung erforderlich? [j/n]: ")
         if poti_set == "j":
             self.IR_poti_setting()
-        self.ir.cali_references() # In if-Block setzen? Dann Eintrag der Werte in config.json.
+        req_ref_def = input("""Referenzwerte ermitteln? [j/n]
+        Hinweis: bei 'n' werden Refernz-Werte aus IR-Referenzwerte.txt übernommen
+        """)
+        self.ref_def(req_ref_def)
+        
         self.lenkw_max = 45 # Betrag des max. Lenkwinkeleinschlags.
         self.lenkw_norm = 0 # Normierten Lenkwinkeleinschlag im Intervall [-1, +1] vorbelegen auf 0.
         self.bg_line = input("""Bitte Boden- & Linienespezifikation definieren
-                            Heller Untergrund/dunkle Linie -> Insert 0
-                            Dunkler Untergrund/helle Linie -> Insert 1
+                            Heller Untergrund/dunkle Linie -> 0
+                            Dunkler Untergrund/helle Linie -> 1
                             """)
-            
+
+                
     def IR_poti_setting(self):
         """
             Einstellung des IR-Potis über Verstellschraube.
             Ermittlung der Referenzwerte mit Hintergrund und Linienfarbe.
-            Übergabe der Werte an write_to_csv.
+            Übergabe der Werte an write_IR_val.
         """
         while True:
             self.ir_sens = input("Bitte Poti einstellen und Wert des Potis eingeben: ")
             self.ir = bk.Infrared() # Steht schon in __init__!?!
 
-            input("Place on background and start measurement: ")
+            input("Bitte IR-Sensoren auf Hintergrund positionieren und Messung mit 'Return' starten!")
             self.background = self.ir.get_average(100)
-            print("measured background: ", self.background)
-            input("Place on line and start measurement: ")
+            print("Messwerte Hintergrund: ", self.background)
+            input("Bitte IR-Sensoren auf Linie positionieren und Messung mit 'Return' starten!")
             self.line = self.ir.get_average(100)
-            print("measured line: ", self.line)
-            self.write_to_csv(self.ir_sens, self.background, self.line)
+            print("Messwerte Linie: ", self.line)
+            self.write_IR_val(self.ir_sens, self.background, self.line)
             stat_cal = input("Weitere Kalibrierungs-Messung? [j/n]: ")
             if stat_cal == "n":
+                input("Bitte geeignete Poti-Stellung setzen und 'Return' drücken!")
                 break
+    
+    def ref_def(self, req_ref_def):
+        """ Referenzwerte der IR-Sensoren definieren
+            'j': Ausführung der Methode cali_references() aus basisklassen.py
+            'n': Einlesen aus IR-Referenzwerte.txt bzw. Setzen von default-Werten bei fehlender Datei
+        """
+        if req_ref_def == "j":
+            self.ir.cali_references() # In if-Block setzen? Dann Eintrag der Werte in config.json.
+            numpy.savetxt("IR-Referenzwerte.txt", self.ir._references) #, fmt="%d")
+        else:
+            if os.path.exists("IR-Referenzwerte.txt"):
+                self.ir._references = numpy.loadtxt("IR-Referenzwerte.txt")
+                print("Werte aus IR-Referenzwerte.txt eingelesen")
+            else:
+                self.ir._references = numpy.array([300, 300, 300, 300, 300])
+                print("IR-Referenzwerte.txt nicht gefunden; Default-Werte gesetzt!")
 
     
-    def write_to_csv(self, ir_sens, background, line):
+    def write_IR_val(self, ir_sens, background, line):
         """
-            Übernimmt Poti-Stellung und Referenzwerte mit Hintergrund und Linienfarbe.
-            Ermittelt Faktor der Sensorsummenwerte.
-            Schreibt Poti-Stellung, Sensorwerte Hintergrund, Linienfarbe, Faktor Sensorsummenwerte.
+            Übernimmt Poti-Stellung und Referenzwerte für Hintergrund und Linienfarbe.
+            Ermittelt Faktor der Referenzsummenwerte.
+            Schreibt Poti-Stellung, Sensorwerte Hintergrund, Sensorwerte Linie, Faktor Sensorsummenwerte in csv-File.
         """
         with open("IR-Ref.csv", mode = "a") as log_file:
             write = csv.writer(log_file)
@@ -68,18 +91,22 @@ class SensorCar(sc.SonicCar):
                 sum_line += line[i]
             ir_sens_fact = sum_background / sum_line 
             write.writerow([ir_sens, background, line, ir_sens_fact])
-            # print("CSV-Datei geschrieben.")
+            
 
     def invert_digital_val(self, sens_werte):
+        """
+            Input: Digitale Werte der IR-Sensoren
+            Output: Invertierte digitale Werte
+        """
         # Create a Dictionary for digital inversion
         b_dict = {0: 1, 1: 0}
         self.sens_werte_invert = []
-        #sens_val = self.ir.read_digital()
+        
 
         for i in sens_werte:
             self.sens_werte_invert.append(b_dict[i])
         return self.sens_werte_invert
-        print(self.sens_werte_invert)
+        
 
     def test_sensoren(self):
         """
@@ -90,10 +117,10 @@ class SensorCar(sc.SonicCar):
         if antwort == "j":
             for i in range(5):
                 input(str(i+1) + ". Sensor (von links)")
-                if self.bg_line == "0":
-                    val_digital = self.ir.read_digital()
-                elif self.bg_line == "1":
+                if self.bg_line == "1":
                     val_digital = self.invert_digital_val(self.ir.read_digital())
+                else:
+                    val_digital = self.ir.read_digital()
                 val_analog = self.ir.read_analog()
                 print(val_digital)
                 print(val_analog)
@@ -115,10 +142,11 @@ class SensorCar(sc.SonicCar):
             # Kein Hindernis (> 5 cm), Fehler (< 0) werden ignoriert
             print(count_sum_sens_0)
             print(dist_radar)
-            if self.bg_line == "0":
+
+            if self.bg_line == "1":
+                sens_werte = self.invert_digital_val(self.ir.read_digital())
+            else:
                 sens_werte = self.ir.read_digital()
-            elif self.bg_line == "1":
-                sens_werte = self.invert_digital_val(self.ir.read_digital())  
             # print(sens_werte)
             # print(sum(sens_werte))
             if sum(sens_werte) != 0:
