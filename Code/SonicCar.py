@@ -13,11 +13,11 @@ class SonicCar(bc.BaseCar):
     Ultraschall‑Sensors. Dazu soll Folgendes entwickelt und getestet werden.
     """
 
-    def __init__(self, abstand):
+    def __init__(self):
         self.fw = bc.bk.Front_Wheels()
         self.bw = bc.bk.Back_Wheels()
         self.us = bc.bk.Ultrasonic()
-        self._abstand = abstand
+        self._abstand = 5
         self.global_data =[]
         self.car_calibration()
 
@@ -58,13 +58,13 @@ class SonicCar(bc.BaseCar):
                 self.stop()
                 break
     
-    def data_rec(self):
-       while True:
-            time.sleep(0.1)
-            dist = self.us.distance()
-            data = self.driving_data(dist)
-            self.global_data.append(data)
-            break
+    # def data_rec(self):
+    #    while True:
+    #         time.sleep(0.1)
+    #         dist = self.us.distance()
+    #         data = self.driving_data(dist)
+    #         self.global_data.append(data)
+    #         break
    
 
     def Fahrparcours_3(self) -> None:        
@@ -110,10 +110,11 @@ class SonicCar(bc.BaseCar):
         self.RW()
         #self.FW_slow() 
         self.Fahrparcours_3()
+        self.write_to_csv()
         
         
 def main():
-    sc = SonicCar(6)
+    sc = SonicCar()
     sc.Fahrparcours_4()
     sc.write_to_csv()
 
