@@ -1,12 +1,14 @@
 import basisklassen as bk
 import SonicCar as sc
+import BaseCar as bc
 import csv
 import time
 import os.path
 import numpy
+from datetime import datetime
 
 
-class SensorCar(sc.SonicCar):
+class SensorCar(sc.SonicCar, sc.bc.BaseCar):
     """
         Die Klasse SensorCar soll zusätzlich den Zugriff auf die Infrarot‑Sensoren ermöglichen. 
         Mittels dieser Sensoren soll das Auto in die Lage versetzt werden eine Linie auf dem Boden 
@@ -16,6 +18,11 @@ class SensorCar(sc.SonicCar):
     """
 
     def __init__(self):
+        # self.speed = 0
+        # self.direction = 1
+        # self.steering_angle = 90
+        self.sc = sc.SonicCar()
+        self.bc = bc.BaseCar()
         self.bw = bk.Back_Wheels()
         self.fw = bk.Front_Wheels()
         self.us = bk.Ultrasonic()
@@ -35,6 +42,7 @@ class SensorCar(sc.SonicCar):
                             Heller Untergrund/dunkle Linie -> 0
                             Dunkler Untergrund/helle Linie -> 1
                             """)
+        self.global_data = [] 
 
                 
     def IR_poti_setting(self):
@@ -125,6 +133,17 @@ class SensorCar(sc.SonicCar):
                 print(val_digital)
                 print(val_analog)
 
+    def driving_data(self, dist, ir_sens_werte):
+        t_now = datetime.utcnow().strftime('%H:%M:%S.%f')[:-3]
+        return (t_now,self.speed,self.direction,self.steering_angle,dist, ir_sens_werte)
+    
+    def write_to_csv(self, dateiname):
+        headerList =["t_now","speed","direction","steering_angle","distance", "IR Sensor digital"] 
+        with open(dateiname, mode ='w') as log_file:
+            write = csv.writer(log_file)
+            write.writerow(headerList)
+            write.writerows(self.global_data)  
+
 
     def Fahrparcours_5(self):
         """
@@ -164,16 +183,31 @@ class SensorCar(sc.SonicCar):
                 count_sum_sens_0 += 1
                 if count_sum_sens_0 > 5:
                     break
+            
+            sens_werte = self.ir.read_digital()
+
+
             # print(lenkw_norm)
 
             lenkwinkel = self.lenkw_norm * self.lenkw_max + 90 # Lenkwinkel fuer Servo umrechnen auf [45...135]
 
+<<<<<<< HEAD
             self.drive(40, 1, lenkwinkel)   # Vorwaerts fahren 
+=======
+            self.drive(70, 1, lenkwinkel)   # Vorwaerts fahren 
+            print(self.speed)
+>>>>>>> 5c6e322127123b4d06207e014bc16710a7fd4785
             # time.sleep(0.02)                # fuer diese Zeit in s
             dist_radar = self.us.distance() # Hindernis mit US-Sensoren ermitteln, Sprung zum while-Schleifen-Anfang
 
+            # self.global_data.append(sens_werte)
+            dist = self.us.distance()
+            self.data = self.driving_data(dist, sens_werte)
+            self.global_data.append(self.data)
+
         print(dist_radar)
-        self.stop()  
+        self.stop()
+        self.write_to_csv("Log-Datei_SonicCar_fp5.csv")
     
     def Fahrparcours_6(self):
         """
@@ -189,9 +223,23 @@ class SensorCar(sc.SonicCar):
                 lenkwinkel = self.lenkw_max * (-1) + 90
             else:
                 lenkwinkel = self.lenkw_max * (+1) + 90
+<<<<<<< HEAD
             self.drive(30, -1, lenkwinkel) # Zuruecksetzen
             time.sleep(0.6) # Wieder Gegenlenken in vorherige Richtung fehlt noch.
+=======
+            self.drive(50, -1, lenkwinkel) # Zuruecksetzen
+            for i in range(6):
+                time.sleep(0.1) # Wieder Gegenlenken in vorherige Richtung fehlt noch.
+                dist = self.us.distance()
+                sens_werte = self.ir.read_digital()
+                self.data = self.driving_data(dist, sens_werte)
+                self.global_data.append(self.data)
+
+>>>>>>> 5c6e322127123b4d06207e014bc16710a7fd4785
             self.stop()
+            dist = self.us.distance()
+            self.data = self.driving_data(dist, sens_werte)
+            self.global_data.append(self.data)
 
             # Stoppen von Hand mit kleinem Abstand vor US-Sensoren
             dist_radar = self.us.distance()
@@ -199,12 +247,17 @@ class SensorCar(sc.SonicCar):
                 # Verlaesst die Dauerschleife mit dem FP_5-Aufruf, macht aber noch irgendetwas mit der Lenkung...
                 break
 
+            self.stop()
+
+        self.write_to_csv("Log-Datei_SonicCar_fp6.csv")
+        
+
 
 def main():
     irCar = SensorCar()
     irCar.test_sensoren()
-    # irCar.Fahrparcours_5()
-    irCar.Fahrparcours_6()
+    irCar.Fahrparcours_5()
+    # irCar.Fahrparcours_6()
     
     
 if __name__ == "__main__":
