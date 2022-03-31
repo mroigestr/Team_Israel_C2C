@@ -32,13 +32,13 @@ class SonicCar(bc.BaseCar):
         else:
             print("Fehler")
 
-    def driving_data(self,dist):
+    def driving_data(self, dist):
         t_now = datetime.utcnow().strftime('%H:%M:%S.%f')[:-3]
         return (t_now,self.speed,self.direction,self.steering_angle,dist)
     
-    def write_to_csv(self):
+    def write_to_csv(self, dateiname):
         headerList =["t_now","speed","direction","steering_angle","distance"] 
-        with open("Log-Datei.csv", mode ='w') as log_file:
+        with open(dateiname, mode ='w') as log_file:
             write = csv.writer(log_file)
             write.writerow(headerList)
             write.writerows(self.global_data)    
@@ -72,6 +72,13 @@ class SonicCar(bc.BaseCar):
         
         print(self.speed)
         self.obstacle()
+        self.write_to_csv("Log-Datei_SonicCar_fp3.csv")
+
+    def FW_fast(self) -> None:        
+        self.drive(50, 1, 90)
+        
+        print(self.speed)
+        self.obstacle()
 
     def RW(self) -> None:        
          self.drive(30, -1, 135)
@@ -101,22 +108,23 @@ class SonicCar(bc.BaseCar):
             time.sleep(0.1)
             dist = self.us.distance()
             data = self.driving_data(dist)
-            self.global_data.append(data)   
+            self.global_data.append(data)
+        
+       
 
     def Fahrparcours_4(self) -> None:
         #while True:
         self.abstand = self.abstand
-        self.Fahrparcours_3()  
+        self.FW_fast()  
         self.RW()
         #self.FW_slow() 
-        self.Fahrparcours_3()
-        self.write_to_csv()
+        self.FW_fast()
+        self.write_to_csv("Log-Datei_SonicCar_fp4.csv")
         
         
 def main():
     sc = SonicCar()
     sc.Fahrparcours_4()
-    sc.write_to_csv()
 
 if __name__ == '__main__':
     main()

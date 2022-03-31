@@ -1,5 +1,7 @@
 import basisklassen as bk
 import json
+from datetime import datetime
+import csv
 
 class BaseCar(object):
 
@@ -32,6 +34,7 @@ class BaseCar(object):
         self.forward_B = 0
         self.turning_offset = 0
         self.car_calibration()
+        self.global_data = [] 
 
 
     def car_calibration(self):
@@ -118,7 +121,8 @@ class BaseCar(object):
         if direction == 1:
             self.bw.forward()
         elif direction == -1:
-            self.bw.backward()          
+            self.bw.backward()
+                  
 
  
     def stop(self) -> None:
@@ -126,6 +130,17 @@ class BaseCar(object):
         """
         self.speed = 0
         self.bw.speed = self.speed
+
+    def driving_data(self):
+        t_now = datetime.utcnow().strftime('%H:%M:%S.%f')[:-3]
+        return (t_now,self.speed,self.direction,self.steering_angle)
+    
+    def write_to_csv(self, dateiname):
+        headerList =["t_now","speed","direction","steering_angle"] 
+        with open(dateiname, mode ='w') as log_file:
+            write = csv.writer(log_file)
+            write.writerow(headerList)
+            write.writerows(self.global_data) 
 
     def Fahrparcours_1(self) -> None:
         """
@@ -137,18 +152,30 @@ class BaseCar(object):
         self.direction = 1
         self.drive(self.speed, self.direction)
         print('forward speed : {}'.format(self.speed))
-
-        bk.time.sleep(t*3)
+        for i in range(30):
+            bk.time.sleep(0.1)
+            data = self.driving_data()
+            self.global_data.append(data)
         self.stop()
         bk.time.sleep(t*1)
+        data = self.driving_data()
+        self.global_data.append(data)
 
         self.speed = 40
         self.direction = -1
         self.drive(self.speed, self.direction)
-        bk.time.sleep(t*3)
+        print('backward speed : {}'.format(self.speed))
+        for i in range(30):
+            bk.time.sleep(0.1)
+            data = self.driving_data()
+            self.global_data.append(data)
 
         self.stop()
         print('stop speed : {}'.format(self.speed))
+        data = self.driving_data()
+        self.global_data.append(data)
+
+        self.write_to_csv("Log-Datei_BaseCar_fp1.csv")
 
     def Fahrparcours_2(self) -> None:
         """
@@ -158,31 +185,42 @@ class BaseCar(object):
         zurückkehren. Die Vorgehensweise soll für eine Fahrt im entgegengesetzten
         Uhrzeigersinn wiederholt werden.
         """
-        t = 1
         
         # 1 Sek geradeaus vorwärts
-        
+        self.global_data = [] 
         self.drive(40, 1, 90)
         print('{} speed : {}, steering angle : {}'.format("forward" if self.direction == 1 else "backward", self.speed, self.steering_angle))
-        bk.time.sleep(t*1)
+        for i in range(10):
+            bk.time.sleep(0.1)
+            data = self.driving_data()
+            self.global_data.append(data)
         
        # 8 Sek. vorwärts mit max Lenkwinkel im Uhrzeigersinn 
            
         self.drive(40, 1, 135)
         print('{} speed : {}, steering angle : {}'.format("forward" if self.direction == 1 else "backward", self.speed, self.steering_angle))
-        bk.time.sleep(t*8)
+        for i in range(80):
+            bk.time.sleep(0.1)
+            data = self.driving_data()
+            self.global_data.append(data)
         
        # Stop 
                
         self.stop()
         print('stop speed : {}'.format(self.speed))
-        bk.time.sleep(t*1)
+        for i in range(10):
+            bk.time.sleep(0.1)
+            data = self.driving_data()
+            self.global_data.append(data)
 
        # 8 Sek. rückwärts mit max Lenkwinkel im Uhrzeigersinn 
     
         self.drive(40, -1, 135)
         print('{} speed : {}, steering angle : {}'.format("forward" if self.direction == 1 else "backward", self.speed, self.steering_angle))
-        bk.time.sleep(t*8)
+        for i in range(80):
+            bk.time.sleep(0.1)
+            data = self.driving_data()
+            self.global_data.append(data)
 
         # 1 Sek geradeaus rückwärts
         
@@ -191,17 +229,25 @@ class BaseCar(object):
         self.steering_angle = 90
         self.drive(40, -1, 90)
         print('{} speed : {}, steering angle : {}'.format("forward" if self.direction == 1 else "backward", self.speed, self.steering_angle))
-        bk.time.sleep(t*1)
+        for i in range(10):
+            bk.time.sleep(0.1)
+            data = self.driving_data()
+            self.global_data.append(data)
 
        # Stop 
                
         self.stop()
         print('stop speed : {}'.format(self.speed))
-        bk.time.sleep(t*1)
+        for i in range(10):
+            bk.time.sleep(0.1)
+            data = self.driving_data()
+            self.global_data.append(data)
+
+        self.write_to_csv("Log-Datei_BaseCar_fp2.csv")
 
 def main():
     bc = BaseCar()
-    # bc.Fahrparcours_1()
+    bc.Fahrparcours_1()
     bc.Fahrparcours_2()
     
 if __name__ == '__main__':
