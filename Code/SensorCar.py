@@ -92,12 +92,14 @@ class SensorCar(sc.SonicCar, sc.bc.BaseCar):
         """
         with open("IR-Ref.csv", mode = "a") as log_file:
             write = csv.writer(log_file)
-            sum_background = 0
-            sum_line = 0
-            for i in range(len(line)): # Schleife ueber alle Sensoren.
-                sum_background += background[i]
-                sum_line += line[i]
-            ir_sens_fact = sum_background / sum_line 
+            # sum_background = 0
+            # sum_line = 0
+            # for i in range(len(line)): # Schleife ueber alle Sensoren.
+            #     sum_background += background[i]
+            #     sum_line += line[i]
+            # print(background, line)
+            # print(sum(background), sum(line))
+            ir_sens_fact = sum(background) / sum(line) 
             write.writerow([ir_sens, background, line, ir_sens_fact])
             
 
@@ -228,6 +230,7 @@ class SensorCar(sc.SonicCar, sc.bc.BaseCar):
                 self.global_data.append(self.data)
 
             self.stop()
+            self.fw.turn(90)
             dist = self.us.distance()
             self.data = self.driving_data(dist, sens_werte)
             self.global_data.append(self.data)
