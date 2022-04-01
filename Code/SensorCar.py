@@ -193,8 +193,12 @@ class SensorCar(sc.SonicCar, sc.bc.BaseCar):
 
             lenkwinkel = self.lenkw_norm * self.lenkw_max + 90 # Lenkwinkel fuer Servo umrechnen auf [45...135]
 
+<<<<<<< HEAD
+            self.drive(40, 1, lenkwinkel)   # Vorwaerts fahren 
+=======
             self.drive(70, 1, lenkwinkel)   # Vorwaerts fahren 
             print(self.speed)
+>>>>>>> 5c6e322127123b4d06207e014bc16710a7fd4785
             # time.sleep(0.02)                # fuer diese Zeit in s
             dist_radar = self.us.distance() # Hindernis mit US-Sensoren ermitteln, Sprung zum while-Schleifen-Anfang
 
@@ -221,6 +225,10 @@ class SensorCar(sc.SonicCar, sc.bc.BaseCar):
                 lenkwinkel = self.lenkw_max * (-1) + 90
             else:
                 lenkwinkel = self.lenkw_max * (+1) + 90
+<<<<<<< HEAD
+            self.drive(30, -1, lenkwinkel) # Zuruecksetzen
+            time.sleep(0.6) # Wieder Gegenlenken in vorherige Richtung fehlt noch.
+=======
             self.drive(50, -1, lenkwinkel) # Zuruecksetzen
             for i in range(6):
                 time.sleep(0.1) # Wieder Gegenlenken in vorherige Richtung fehlt noch.
@@ -229,6 +237,7 @@ class SensorCar(sc.SonicCar, sc.bc.BaseCar):
                 self.data = self.driving_data(dist, sens_werte)
                 self.global_data.append(self.data)
 
+>>>>>>> 5c6e322127123b4d06207e014bc16710a7fd4785
             self.stop()
             self.fw.turn(90)
             dist = self.us.distance()
