@@ -28,13 +28,13 @@ class CamCar(object):
             mask = cv.inRange(img_hsv, lower, upper) # mask ist Numpy-Array
 
             # mask_cn = cv.Canny(img_hsv, 50, 200)
-            mask_cn = cv.Canny(mask, 50, 100)
-
+            mask_cn = cv.Canny(mask, 50, 200)
+            print("mask_cn: ", mask_cn)
             image_hough = self.line_detection(mask)
             # image_hough = self.line_detectP(mask)
 
             # Visualisierung des Bilds
-            # cv.imshow("Display window (press q to quit)", mask)
+            # cv.imshow("Display window (press q to quit)", mask_cn)
             cv.imshow("Display window (press q to quit)", image_hough)
             # Ende bei Drücken der Taste q
             if cv.waitKey(1) == ord('q'):
@@ -46,15 +46,17 @@ class CamCar(object):
         # Klassische Hough-Transformation
         rho = 1  # distance precision in pixel, i.e. 1 pixel
         angle = np.pi / 180   # angular precision in radian, i.e. 1 degree
-        min_threshold = 80  # minimal of votes, Je geringer Min_threshold, dest mehr Geraden werden erkannt.
-
+        min_threshold = 180  # minimal of votes, Je geringer Min_threshold, dest mehr Geraden werden erkannt.
+                            # 180 gut für inRange ohne Canny, 60 gut für inRange mit Canny
+        
         parameter_mask = cv.HoughLines(mask, rho, angle, min_threshold)
-        print("Shape Parameter_mask:", parameter_mask.shape)
+        print("Shape Parameter_mask:", parameter_mask.shape) # type(parameter_mask) = numpy.ndarray
         
         img2 = mask.copy()
         img2 = cv.cvtColor(img2, cv.COLOR_GRAY2RGB)
         for line in parameter_mask:
-            rho,theta = line[0]
+            # print("Line: ", line[0])
+            rho, theta = line[0]
             if abs(np.sin(theta)) < 1e-6:
                 a = 1000
                 b = 1000
