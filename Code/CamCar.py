@@ -23,19 +23,22 @@ class CamCar(object):
             # BGR2HSV-Transformation
             img_hsv = cv.cvtColor(image, cv.COLOR_BGR2HSV)
             # Erzeugung einer Maske (Farbfilter für blau)
-            lower = np.array([100, 0, 0])
-            upper = np.array([120, 255, 255])
+            lower = np.array([102, 149, 0])
+            upper = np.array([114, 255, 255])
             mask = cv.inRange(img_hsv, lower, upper) # mask ist Numpy-Array
 
             # mask_cn = cv.Canny(img_hsv, 50, 200)
-            mask_cn = cv.Canny(mask, 50, 200)
+            mask_cn = cv.Canny(mask, 199, 200)
             # print("mask_cn: ", mask_cn)
-            image_hough = self.line_detection(mask)
-            # image_hough = self.line_detectP(mask)
+            #image_hough = self.line_detection(mask_cn)
+            image_hough = self.line_detectP(mask_cn)
 
             # Visualisierung des Bilds
-            # cv.imshow("Display window (press q to quit)", mask_cn)
-            cv.imshow("Display window (press q to quit)", image_hough)
+            #cv.imshow("Display window (press q to quit)", mask_cn)
+            #cv.imshow("Display window (press q to quit)", image_hough)
+            img = cv.cvtColor(mask_cn, cv.COLOR_GRAY2BGR)
+            img = np.hstack((image, img, image_hough))
+            cv.imshow("Display window (press q to quit)", img)
             # Ende bei Drücken der Taste q
             if cv.waitKey(1) == ord('q'):
                 break
@@ -46,7 +49,7 @@ class CamCar(object):
         # Klassische Hough-Transformation
         rho = 1  # distance precision in pixel, i.e. 1 pixel
         angle = np.pi / 180  # angular precision in radian, i.e. 1 degree
-        min_threshold = 180  # minimal of votes, Je geringer Min_threshold, dest mehr Geraden werden erkannt.
+        min_threshold = 60  # minimal of votes, Je geringer Min_threshold, dest mehr Geraden werden erkannt.
                              # 180 gut für inRange ohne Canny, 60 gut für inRange mit Canny
         
         parameter_mask = cv.HoughLines(mask, rho, angle, min_threshold)
@@ -84,17 +87,25 @@ class CamCar(object):
         
 
     def line_detectP(self, mask):
-        # Probalistische Hough-Transformation
+         # Probabilistische Hough-Transformation
+        img2 = mask.copy()
+        img2 = cv.cvtColor(img2, cv.COLOR_GRAY2RGB)
+       
         rho = 1  # distance precision in pixel, i.e. 1 pixel
         angle = np.pi / 180  # angular precision in radian, i.e. 1 degree
-        min_threshold = 10   # in etwa Anzahl der Punkte auf der Geraden. Je geringer Min_threshold, dest mehr Geraden werden erkannt.
+        min_threshold = 60  # in etwa Anzahl der Punkte auf der Geraden. Je geringer Min_threshold, dest mehr Geraden werden erkannt.
         minLineLength = 8    # Minimale Linienlänge
-        maxLineGap = 4       # Maximale Anzahl von Lücken in der Linie
+        maxLineGap = 10       # Maximale Anzahl von Lücken in der Linie
 
         line_segments = cv.HoughLinesP(mask, rho, angle, min_threshold, np.array([]), minLineLength=minLineLength, maxLineGap=maxLineGap)
         print(line_segments.shape)
         # Elemente stellen Punkte des Liniensegmentes dar (x1,y1,x2,y2)
-        line_segments[:2]
+        for line in line_segments:
+            x1,y1,x2,y2 = line[0]
+            cv.line(img2,(x1,y1),(x2,y2),(120,0,0),3)
+        return img2
+        # line_segments[:2]
+        # return line_segments
 
 
 def main():
