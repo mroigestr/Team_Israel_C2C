@@ -29,7 +29,7 @@ class CamCar(object):
 
             # mask_cn = cv.Canny(img_hsv, 50, 200)
             mask_cn = cv.Canny(mask, 50, 200)
-            print("mask_cn: ", mask_cn)
+            # print("mask_cn: ", mask_cn)
             image_hough = self.line_detection(mask)
             # image_hough = self.line_detectP(mask)
 
@@ -45,9 +45,9 @@ class CamCar(object):
     def line_detection(self, mask):
         # Klassische Hough-Transformation
         rho = 1  # distance precision in pixel, i.e. 1 pixel
-        angle = np.pi / 180   # angular precision in radian, i.e. 1 degree
+        angle = np.pi / 180  # angular precision in radian, i.e. 1 degree
         min_threshold = 180  # minimal of votes, Je geringer Min_threshold, dest mehr Geraden werden erkannt.
-                            # 180 gut für inRange ohne Canny, 60 gut für inRange mit Canny
+                             # 180 gut für inRange ohne Canny, 60 gut für inRange mit Canny
         
         parameter_mask = cv.HoughLines(mask, rho, angle, min_threshold)
         print("Shape Parameter_mask:", parameter_mask.shape) # type(parameter_mask) = numpy.ndarray
@@ -55,14 +55,18 @@ class CamCar(object):
         img2 = mask.copy()
         img2 = cv.cvtColor(img2, cv.COLOR_GRAY2RGB)
         for line in parameter_mask:
-            # print("Line: ", line[0])
+            print("Anzahl Linien: ", len(parameter_mask))
             rho, theta = line[0]
-            if abs(np.sin(theta)) < 1e-6:
-                a = 1000
-                b = 1000
-            else:
-                a = -np.cos(theta)/np.sin(theta) # Anstieg der Gerade
-                b = rho/np.sin(theta)            # Absolutglied/Intercept/Schnittpunkt mit der y-Achse
+            epsilon = 1e-6
+            sinus_theta = np.sin(theta)
+            if abs(sinus_theta) < epsilon:
+                ''' Nenner < epsilon => Abs(Nenner) = epsilon mit richtigem Vorzeichen'''
+                if sinus_theta >= 0:
+                    sinus_theta = epsilon
+                else:
+                    sinus_theta = -epsilon
+            a = -np.cos(theta)/sinus_theta # Anstieg der Gerade
+            b = rho/sinus_theta            # Absolutglied/Intercept/Schnittpunkt mit der y-Achse
             x1 = 0
             y1 = int(b)
             x2 = 1000
