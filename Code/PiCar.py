@@ -1,6 +1,7 @@
 import BaseCar as bc
 import SonicCar as sc
 import SensorCar as rc
+import CamCar as cc
 
 class PiCar(object):
     def __init__(self): # ist notwendig?
@@ -22,6 +23,7 @@ class PiCar(object):
         fp4_text = 'Fahrparcours 4 - FP3 + Hindernis umfahren'
         fp5_text = 'Fahrparcours 5 - Linie verfolgen + Hinderniserkennung aktiv'
         fp6_text = 'Fahrparcours 6 - Linie verfolgen + Hinderniserkennung aktiv + Rückwärtsfahren bei engen Kurven'
+        fp7_text = 'Fahrparcours 7 - Linie verfolgen + Kamerabild'
 
         Fahrparcour = {
             1: fp1_text,
@@ -29,7 +31,8 @@ class PiCar(object):
             3: fp3_text,
             4: fp4_text,
             5: fp5_text,
-            6: fp6_text
+            6: fp6_text,
+            7: fp7_text
         }
 
         if fahrparcour == None:
@@ -40,9 +43,9 @@ class PiCar(object):
             print('--' * 20)
 
         while fahrparcour == None:
-            fahrparcour = input('Fahrparcours auswählen[1..6] ')
+            fahrparcour = input('Fahrparcours auswählen[1..7] ')
             
-            if fahrparcour in ['1', '2', '3', '4', '5', '6']:
+            if fahrparcour in ['1', '2', '3', '4', '5', '6', '7']:
                 break
             # elif fahrparcour == "i":
             #     print('Fahrparcours 1 - Vorwärts und Rückwärts fahren')
@@ -51,6 +54,7 @@ class PiCar(object):
             #     print('Fahrparcours 4 - FP3 + Hinderniss umfahren')
             #     print('Fahrparcours 5 - Linie verfolgen + Hindernisserkennung aktiv')
             #     print('Fahrparcours 6 - Linie verfolgen + Hindernisserkennung aktiv + Rückwärtsfahren bei engen Kurven')
+            #     print('Fahrparcours 7 - Linie verfolgen + Kamerabild')
             else:
                 fahrparcour = None
                 print('Getroffene Auswahl nicht möglich.')           
@@ -87,6 +91,11 @@ class PiCar(object):
             print(fp6_text)
             fp6 = rc.SensorCar()
             fp6.Fahrparcours_6()
+
+        if fahrparcour == 7:
+            print(fp7_text)
+            fp7 = cc.CamCar()
+            fp7.Fahrparcours_7()
 
 def main():
     pc = PiCar()

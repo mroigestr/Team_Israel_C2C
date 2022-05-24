@@ -3,11 +3,13 @@ import BaseCar as bc
 import cv2 as cv
 import matplotlib.pyplot as plt
 import numpy as np
+import collections as col
 
 class CamCar(object):
 
     def __init__(self):
         self.Cam = bk_cam.Camera()
+        self.steeringangle_dq = col.deque([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
         print("Init abgeschlossen")
 
     def video_capture(self):
@@ -26,14 +28,14 @@ class CamCar(object):
 
             #ROI region of Interest
             h1, w1, _ = image_hsv.shape
-            img_hsv = image_hsv[int(h1*1/3):int(h1*2/3),int(w1*1/10):int(w1*9/10)]
-            h1, w1, _ = image_hsv.shape
+            img_hsv = image_hsv[int(h1*2/3):int(h1),int(w1*1/10):int(w1*9/10)]
+            #h1, w1, _ = image_hsv.shape
             mid_pic_w = w1/2
-            
+            #print(img_hsv)
 
             # Erzeugung einer Maske (Farbfilter für blau)
-            lower = np.array([102, 149, 0])
-            upper = np.array([114, 255, 255])
+            lower = np.array([85, 68, 0])
+            upper = np.array([122, 255, 255])
             mask = cv.inRange(img_hsv, lower, upper) # mask ist Numpy-Array
 
             # mask_cn = cv.Canny(img_hsv, 50, 200)
@@ -54,7 +56,7 @@ class CamCar(object):
         # Kamera-Objekt muss "released" werden, um "später" ein neues Kamera-Objekt erstellen zu können!!!
         self.Cam.release()
     
-    def line_detection(self, mask):
+    """def line_detection(self, mask):
         # Klassische Hough-Transformation
         rho = 1  # distance precision in pixel, i.e. 1 pixel
         angle = np.pi / 180  # angular precision in radian, i.e. 1 degree
@@ -92,7 +94,7 @@ class CamCar(object):
                 fontScale = .8, # Font size
                 color = (120,255,255), # Color in hsv
                 thickness = 2)
-        return img2
+        return img2"""
         
 
     def line_detectP(self, mask, mid_pic_w):
@@ -107,71 +109,77 @@ class CamCar(object):
         maxLineGap = 10       # Maximale Anzahl von Lücken in der Linie
 
         line_segments = cv.HoughLinesP(mask, rho, angle, min_threshold, np.array([]), minLineLength=minLineLength, maxLineGap=maxLineGap)
-        print(line_segments.shape)
-        # Elemente stellen Punkte des Liniensegmentes dar (x1,y1,x2,y2)
-        left_lines = []
-        right_lines = []
-
-        # Vertikale Mittellinie
-        h, w, _ = img2.shape
-        img2 = cv.line(img2, (int(w/2),0), (int(w/2),h), (128,128,128), 2)
-
-      
-        for line in line_segments:
-            x1,y1,x2,y2 = line[0]
-            line_act = [x1,y1,x2,y2]
-            print(x1,y1,x2,y2)
-            #mean_x = np.mean(x1, x2)
-            mean_x = (x1+x2)/2
-            #mean_y = (y1+y2)/2
-
-                   
-            if mean_x < int(w/2):
-                left_lines.append(line_act)
-                
-                cv.line(img2,(x1,y1),(x2,y2),(0,255,0),3)
-                #print(left_lines)
-            else:
-                right_lines.append(line_act)
-                cv.line(img2,(x1,y1),(x2,y2),(0,0,255),3)
-                #print(right_lines)
-
-            print(type(left_lines))
-
-        lh_lines_mean = np.mean(left_lines, axis=0).astype("int")
-        x1,y1,x2,y2 = lh_lines_mean
-
-        #Gerade mit gegebenen Punkten (x1, y1), (x2, y2)
-        #Gesucht ist der Punkt (x3, y3), gegeben ist y3
-        y3 = 0
-        x3 = int((y3-y1)/(y2-y1) * (x2-x1) + x1)
-
-        print(lh_lines_mean)
-        cv.line(img2,(x1,y1),(x2,y2),(255,0,0),3)
-        cv.line(img2,(x3,y3),(x2,y2),(100,0,0),6)
+        if line_segments is not None:
+                        
 
 
-        rh_lines_mean = np.mean(right_lines, axis=0).astype("int")
-        x1,y1,x2,y2 = rh_lines_mean
+            print(line_segments.shape)
+            # Elemente stellen Punkte des Liniensegmentes dar (x1,y1,x2,y2)
+            left_lines = []
+            right_lines = []
 
-        print(rh_lines_mean)
-        cv.line(img2,(x1,y1),(x2,y2),(255,0,0),3)   
+            # Vertikale Mittellinie
+            h, w, _ = img2.shape
+            img2 = cv.line(img2, (int(w/2),0), (int(w/2),h), (128,128,128), 2)
 
         
+            for line in line_segments:
+                x1,y1,x2,y2 = line[0]
+                line_act = [x1,y1,x2,y2]
+                #print(x1,y1,x2,y2)
+                #mean_x = np.mean(x1, x2)
+                mean_x = (x1+x2)/2
+                #mean_y = (y1+y2)/2
 
-        
+                    
+                if mean_x < int(w/2):
+                    left_lines.append(line_act)
+                    
+                    cv.line(img2,(x1,y1),(x2,y2),(0,255,0),3)
+                    #print(left_lines)
+                else:
+                    right_lines.append(line_act)
+                    cv.line(img2,(x1,y1),(x2,y2),(0,0,255),3)
+                    #print(right_lines)
+
+                #print(type(left_lines))
+
+            lh_lines_mean = np.mean(left_lines, axis=0).astype("int")
+            x1,y1,x2,y2 = lh_lines_mean
+
+            #Gerade mit gegebenen Punkten (x1, y1), (x2, y2)
+            #Gesucht ist der Punkt (x3, y3), gegeben ist y3
+            y3 = 0
+            x3l = int((y3-y1)/(y2-y1) * (x2-x1) + x1)
+
+            #print(lh_lines_mean)
+            cv.line(img2,(x1,y1),(x2,y2),(255,0,0),3)
+            cv.line(img2,(x3l,y3),(x2,y2),(100,0,0),6)
+
+
+            rh_lines_mean = np.mean(right_lines, axis=0).astype("int")
+            x1,y1,x2,y2 = rh_lines_mean
+
+            x3r = int((y3-y1)/(y2-y1) * (x2-x1) + x1)
             
-            #lh_lines_mean_x2 = np.mean(left_lines[2], axis=0)
-            #lh_mean_x = np.mean
+            #print(rh_lines_mean)
+            cv.line(img2,(x1,y1),(x2,y2),(255,0,0),3)   
+            cv.line(img2,(x3r,y3),(x2,y2),(100,0,0),6)
+            x3m = int((x3r+x3l)/2)
 
-               
+            cv.line(img2, (x3m,0), (int(w/2),h), (128,0,128), 2)
 
-            #cv.line(img2,(x1,y1),(x2,y2),(120,0,0),3)
-
-
-        print(left_lines) 
-        print(right_lines)
-        return img2
+            steering_angle=np.arctan((w/2-x3m)/h)*(-1)*(180)/np.pi
+            print(steering_angle)
+            
+            self.steeringangle_dq.append(steering_angle)
+            self.steeringangle_dq.popleft()
+            self.steeringangle_m=np.mean(self.steeringangle_dq)
+            #print(self.steeringangle_dq)
+            #print(self.steeringangle_m)
+            #print(left_lines) 
+            #print(right_lines)
+            return img2
         
         # line_segments[:2]
         # return line_segments
