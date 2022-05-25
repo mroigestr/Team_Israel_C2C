@@ -58,7 +58,7 @@ class CamCar(object):
         mask_cn = cv.Canny(mask, 199, 200)
         # print("mask_cn: ", mask_cn)
         #image_hough = self.line_detection(mask_cn)
-        image_hough, x3m = self.line_detectP(mask_cn, mid_pic_w)
+        image_hough, x3m = self.line_detectP(mask_cn)
         self.autolenkwinkel(x3m)
 
         # Visualisierung des Bilds
@@ -115,7 +115,7 @@ class CamCar(object):
         return img2"""
         
 
-    def line_detectP(self, mask, mid_pic_w):
+    def line_detectP(self, mask):
          # Probabilistische Hough-Transformation
         img2 = mask.copy()
         img2 = cv.cvtColor(img2, cv.COLOR_GRAY2RGB)
@@ -127,70 +127,90 @@ class CamCar(object):
         maxLineGap = 10       # Maximale Anzahl von Lücken in der Linie
 
         line_segments = cv.HoughLinesP(mask, rho, angle, min_threshold, np.array([]), minLineLength=minLineLength, maxLineGap=maxLineGap)
-        if line_segments is not None:
-                        
 
-
-            print(line_segments.shape)
+        if line_segments is None:
+            print("HoughLinesP hat keine Linien gefunden")
+        else:
             # Elemente stellen Punkte des Liniensegmentes dar (x1,y1,x2,y2)
-            left_lines = []
-            right_lines = []
+            lh_lines = []
+            rh_lines = []
 
             # Vertikale Mittellinie
-            self.h, self.w, _ = img2.shape
-            img2 = cv.line(img2, (int(self.w/2),0), (int(self.w/2),self.h), (128,128,128), 2)
+            h, w, _ = img2.shape
+            cv.line(img2, (int(w/2),0), (int(w/2),h), (128,128,128), 2)
 
-        
             for line in line_segments:
                 x1,y1,x2,y2 = line[0]
                 line_act = [x1,y1,x2,y2]
-                #print(x1,y1,x2,y2)
-                #mean_x = np.mean(x1, x2)
+                # print(x1,y1,x2,y2)
                 mean_x = (x1+x2)/2
-                #mean_y = (y1+y2)/2
 
-                    
-                if mean_x < int(self.w/2):
-                    left_lines.append(line_act)
-                    
-                    cv.line(img2,(x1,y1),(x2,y2),(0,255,0),3)
-                    #print(left_lines)
+                # Aufteilung der Linien in links und rechts    
+                if mean_x < int(w/2):
+                    lh_lines.append(line_act)
+                    cv.line(img2, (x1,y1),(x2,y2), (0,0,128),3)
                 else:
-                    right_lines.append(line_act)
-                    cv.line(img2,(x1,y1),(x2,y2),(0,0,255),3)
-                    #print(right_lines)
+                    rh_lines.append(line_act)
+                    cv.line(img2, (x1,y1),(x2,y2), (0,128,0),3)
 
-                #print(type(left_lines))
+            # Gerade mit gegebenen Punkten (x1, y1), (x2, y2)
+            # Gesucht ist der Punkt (x3, y3), gegeben ist y3
+            y3 = 0 # Schnittpunkt mit der x-Achse: Oberer Bildrand
 
-            lh_lines_mean = np.mean(left_lines, axis=0).astype("int")
-            x1,y1,x2,y2 = lh_lines_mean
+            # Durchschnitt der linken Linien 
+            if len(lh_lines) == 0:
+                print("Keine Linien in der linken Bildhälfte gefunden")
+                x3l = 0  # Volle Unterstützung dieser Seite
+            else:
+                lh_lines_mean = np.mean(lh_lines, axis=0).astype("int")
+                x1,y1,x2,y2 = lh_lines_mean
 
-            #Gerade mit gegebenen Punkten (x1, y1), (x2, y2)
-            #Gesucht ist der Punkt (x3, y3), gegeben ist y3
-            y3 = 0
-            x3l = int((y3-y1)/(y2-y1) * (x2-x1) + x1)
+                # Sehr kleinen Nenner abfangen
+                dy12 = diff_epsi((y2-y1), 1e-6)
+                print("dy12:", dy12)
 
-            #print(lh_lines_mean)
-            cv.line(img2,(x1,y1),(x2,y2),(255,0,0),3)
-            cv.line(img2,(x3l,y3),(x2,y2),(100,0,0),6)
+                # Schnittpunkt der linken "Mittellinie" mit oberem Bildrand
+                x3l = int((x2-x1)/(dy12) * (y3-y1) + x1)
 
+                cv.line(img2, (x1, y1),(x2,y2) ,(0,0,192),4)   # Gemittelte Linie links
+                cv.line(img2, (x3l,y3),(x2,y2) ,(0,0,255),2)  # ... verlängert zum oberen Bildrand
 
-            rh_lines_mean = np.mean(right_lines, axis=0).astype("int")
-            print(rh_lines_mean)
-            x1,y1,x2,y2 = rh_lines_mean
+            # Durchschnitt der rechten Linien 
+            if len(rh_lines) == 0:
+                print("Keine Linien in der rechten Bildhälfte gefunden")
+                x3r = w  # Volle Unterstützung dieser Seite
+            else:
+                rh_lines_mean = np.mean(rh_lines, axis=0).astype("int")
+                x1,y1,x2,y2 = rh_lines_mean
 
-            x3r = int((y3-y1)/(y2-y1) * (x2-x1) + x1)
-            
-            #print(rh_lines_mean)
-            cv.line(img2,(x1,y1),(x2,y2),(255,0,0),3)   
-            cv.line(img2,(x3r,y3),(x2,y2),(100,0,0),6)
+                # Sehr kleinen Nenner abfangen
+                dy12 = diff_epsi((y2-y1), 1e-6)
 
+                # Schnittpunkt der rechten "Mittellinie" mit oberem Bildrand
+                x3r = int((x2-x1)/(dy12) * (y3-y1) + x1)
+                
+                # print(rh_lines)
+                cv.line(img2, (x1, y1),(x2,y2), (0,192,0),4)  # Gemittelte Linie rechts
+                cv.line(img2, (x3r,y3),(x2,y2), (0,255,0),2)  # ... verlängert zum oberen Bildrand
+ 
+            # Mittelpunkt der Schnittpunkte mit oberem Bildrand
             x3m = int((x3r+x3l)/2)
-            cv.line(img2, (x3m,0), (int(self.w/2),self.h), (128,0,128), 2)
+            # Ziellinie von unterer Bildmitte zu x3m
+            cv.line(img2, (x3m,0),(int(w/2),h), (192,0,32),6)
 
-            return img2, x3m
+            steering_angle = np.arctan((w/2-x3m)/h)*(-180)/np.pi
+            print(steering_angle)
+            
+            self.steeringangle_dq.append(steering_angle)
+            self.steeringangle_dq.popleft()
+            self.steeringangle_m=np.mean(self.steeringangle_dq)
+            #print(self.steeringangle_dq)
+            #print(self.steeringangle_m)
 
-    def autolenkwinkel(self, x3m ):
+        return img2, x3m
+
+
+    def autolenkwinkel(self, x3m):
         
         steering_angle=np.arctan((self.w/2-x3m)/self.h)*(-1)*(180)/np.pi
         print(steering_angle)
@@ -218,12 +238,14 @@ class CamCar(object):
         self.Cam.release()
     
 
-
-
-
-            
-        # line_segments[:2]
-        # return line_segments
+def diff_epsi(diff, epsilon):
+    ''' Falls |diff| < epsilon => |diff| = epsilon mit richtigem Vorzeichen '''
+    if abs(diff) < epsilon:
+        if diff >= 0:
+            diff = epsilon
+        else:
+            diff = -epsilon
+    return diff
 
 
 def main():
