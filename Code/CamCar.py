@@ -8,53 +8,57 @@ import collections as col
 class CamCar(object):
 
     def __init__(self):
+        self.bc = bc.BaseCar()
         self.Cam = bk_cam.Camera()
         self.steeringangle_dq = col.deque([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+        self.h = 0
+        self.w = 0
+        self.lenkwinkel = 90
         print("Init abgeschlossen")
 
     def video_capture(self):
         
+        
+        # Abfrage eines Frames            
+        image = self.Cam.get_frame()
 
-        # # Schleife für Video Capturing
-        while True:
-            # Abfrage eines Frames            
-            image = self.Cam.get_frame()
+        # Resizing
+        height, width, _ = image.shape
+        image = cv.resize(image,(int(width*2/3), int(height*2/3)), interpolation = cv.INTER_CUBIC)
+        # BGR2HSV-Transformation
+        image_hsv = cv.cvtColor(image, cv.COLOR_BGR2HSV)
 
-            # Resizing
-            height, width, _ = image.shape
-            image = cv.resize(image,(int(width*2/3), int(height*2/3)), interpolation = cv.INTER_CUBIC)
-            # BGR2HSV-Transformation
-            image_hsv = cv.cvtColor(image, cv.COLOR_BGR2HSV)
+        #ROI region of Interest
+        h1, w1, _ = image_hsv.shape
+        img_hsv = image_hsv[int(h1*2/3):int(h1),int(w1*1/10):int(w1*9/10)]
+        #h1, w1, _ = image_hsv.shape
+        mid_pic_w = w1/2
+        #print(img_hsv)
 
-            #ROI region of Interest
-            h1, w1, _ = image_hsv.shape
-            img_hsv = image_hsv[int(h1*2/3):int(h1),int(w1*1/10):int(w1*9/10)]
-            #h1, w1, _ = image_hsv.shape
-            mid_pic_w = w1/2
-            #print(img_hsv)
+        # Erzeugung einer Maske (Farbfilter für blau)
+        lower = np.array([85, 68, 0])
+        upper = np.array([122, 255, 255])
+        mask = cv.inRange(img_hsv, lower, upper) # mask ist Numpy-Array
 
-            # Erzeugung einer Maske (Farbfilter für blau)
-            lower = np.array([85, 68, 0])
-            upper = np.array([122, 255, 255])
-            mask = cv.inRange(img_hsv, lower, upper) # mask ist Numpy-Array
+        # mask_cn = cv.Canny(img_hsv, 50, 200)
+        mask_cn = cv.Canny(mask, 199, 200)
+        # print("mask_cn: ", mask_cn)
+        #image_hough = self.line_detection(mask_cn)
+        image_hough, x3m = self.line_detectP(mask_cn, mid_pic_w)
+        self.autolenkwinkel(x3m)
 
-            # mask_cn = cv.Canny(img_hsv, 50, 200)
-            mask_cn = cv.Canny(mask, 199, 200)
-            # print("mask_cn: ", mask_cn)
-            #image_hough = self.line_detection(mask_cn)
-            image_hough = self.line_detectP(mask_cn, mid_pic_w)
-
-            # Visualisierung des Bilds
-            #cv.imshow("Display window (press q to quit)", mask_cn)
-            #cv.imshow("Display window (press q to quit)", image_hough)
-            img = cv.cvtColor(mask_cn, cv.COLOR_GRAY2BGR)
-            img = np.hstack((img_hsv, image_hough))
-            cv.imshow("Display window (press q to quit)", img)
-            # Ende bei Drücken der Taste q
-            if cv.waitKey(1) == ord('q'):
-                break
+        # Visualisierung des Bilds
+        #cv.imshow("Display window (press q to quit)", mask_cn)
+        #cv.imshow("Display window (press q to quit)", image_hough)
+        img = cv.cvtColor(mask_cn, cv.COLOR_GRAY2BGR)
+        img = np.hstack((img_hsv, image_hough))
+        # cv.imshow("Display window (press q to quit)", img)
+        # # Ende bei Drücken der Taste q
+        # if cv.waitKey(1) == ord('q'):
+        #     break
         # Kamera-Objekt muss "released" werden, um "später" ein neues Kamera-Objekt erstellen zu können!!!
-        self.Cam.release()
+        return img
+        #self.Cam.release()
     
     """def line_detection(self, mask):
         # Klassische Hough-Transformation
@@ -119,8 +123,8 @@ class CamCar(object):
             right_lines = []
 
             # Vertikale Mittellinie
-            h, w, _ = img2.shape
-            img2 = cv.line(img2, (int(w/2),0), (int(w/2),h), (128,128,128), 2)
+            self.h, self.w, _ = img2.shape
+            img2 = cv.line(img2, (int(self.w/2),0), (int(self.w/2),self.h), (128,128,128), 2)
 
         
             for line in line_segments:
@@ -132,7 +136,7 @@ class CamCar(object):
                 #mean_y = (y1+y2)/2
 
                     
-                if mean_x < int(w/2):
+                if mean_x < int(self.w/2):
                     left_lines.append(line_act)
                     
                     cv.line(img2,(x1,y1),(x2,y2),(0,255,0),3)
@@ -158,6 +162,7 @@ class CamCar(object):
 
 
             rh_lines_mean = np.mean(right_lines, axis=0).astype("int")
+            print(rh_lines_mean)
             x1,y1,x2,y2 = rh_lines_mean
 
             x3r = int((y3-y1)/(y2-y1) * (x2-x1) + x1)
@@ -165,22 +170,44 @@ class CamCar(object):
             #print(rh_lines_mean)
             cv.line(img2,(x1,y1),(x2,y2),(255,0,0),3)   
             cv.line(img2,(x3r,y3),(x2,y2),(100,0,0),6)
+
             x3m = int((x3r+x3l)/2)
+            cv.line(img2, (x3m,0), (int(self.w/2),self.h), (128,0,128), 2)
 
-            cv.line(img2, (x3m,0), (int(w/2),h), (128,0,128), 2)
+            return img2, x3m
 
-            steering_angle=np.arctan((w/2-x3m)/h)*(-1)*(180)/np.pi
-            print(steering_angle)
-            
-            self.steeringangle_dq.append(steering_angle)
-            self.steeringangle_dq.popleft()
-            self.steeringangle_m=np.mean(self.steeringangle_dq)
-            #print(self.steeringangle_dq)
-            #print(self.steeringangle_m)
-            #print(left_lines) 
-            #print(right_lines)
-            return img2
+    def autolenkwinkel(self, x3m ):
         
+        steering_angle=np.arctan((self.w/2-x3m)/self.h)*(-1)*(180)/np.pi
+        print(steering_angle)
+        
+        self.steeringangle_dq.append(steering_angle)
+        self.steeringangle_dq.popleft()
+        self.steeringangle_m=np.mean(self.steeringangle_dq)
+        self.lenkwinkel = int(self.steeringangle_m + 90)
+        
+        if self.lenkwinkel < 45:
+            self.lenkwinkel = 45
+        elif self.lenkwinkel > 135:
+            self.lenkwinkel = 135
+              
+
+    def Fahrparcours_7(self):
+        while True:
+            img = self.video_capture()
+            cv.imshow("Display window (press q to quit)", img)
+            # Ende bei Drücken der Taste q
+            if cv.waitKey(1) == ord('q'):
+                break
+            self.bc.drive(20, 1, self.lenkwinkel)
+
+        self.Cam.release()
+    
+
+
+
+
+            
         # line_segments[:2]
         # return line_segments
 
@@ -188,7 +215,7 @@ class CamCar(object):
 def main():
     # TestCam = bk_cam.Camera()   
     TestCam = CamCar()
-    TestCam.video_capture()
+    TestCam.Fahrparcours_7()
     
 if __name__ == '__main__':
     main()
