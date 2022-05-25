@@ -136,8 +136,8 @@ class CamCar(object):
             rh_lines = []
 
             # Vertikale Mittellinie
-            h, w, _ = img2.shape
-            cv.line(img2, (int(w/2),0), (int(w/2),h), (128,128,128), 2)
+            self.h, self.w, _ = img2.shape
+            cv.line(img2, (int(self.w/2),0), (int(self.w/2),self.h), (128,128,128), 2)
 
             for line in line_segments:
                 x1,y1,x2,y2 = line[0]
@@ -146,7 +146,7 @@ class CamCar(object):
                 mean_x = (x1+x2)/2
 
                 # Aufteilung der Linien in links und rechts    
-                if mean_x < int(w/2):
+                if mean_x < int(self.w/2):
                     lh_lines.append(line_act)
                     cv.line(img2, (x1,y1),(x2,y2), (0,0,128),3)
                 else:
@@ -196,16 +196,7 @@ class CamCar(object):
             # Mittelpunkt der Schnittpunkte mit oberem Bildrand
             x3m = int((x3r+x3l)/2)
             # Ziellinie von unterer Bildmitte zu x3m
-            cv.line(img2, (x3m,0),(int(w/2),h), (192,0,32),6)
-
-            steering_angle = np.arctan((w/2-x3m)/h)*(-180)/np.pi
-            print(steering_angle)
-            
-            self.steeringangle_dq.append(steering_angle)
-            self.steeringangle_dq.popleft()
-            self.steeringangle_m=np.mean(self.steeringangle_dq)
-            #print(self.steeringangle_dq)
-            #print(self.steeringangle_m)
+            cv.line(img2, (x3m,0),(int(self.w/2),self.h), (192,0,32),6)
 
         return img2, x3m
 
