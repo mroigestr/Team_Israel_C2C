@@ -4,17 +4,32 @@ import cv2 as cv
 import matplotlib.pyplot as plt
 import numpy as np
 import collections as col
+import csv
 
 class CamCar(object):
 
     def __init__(self):
         self.bc = bc.BaseCar()
         self.Cam = bk_cam.Camera()
-        self.steeringangle_dq = col.deque([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+        self.steeringangle_dq = col.deque([0, 0, 0, 0])#, 0, 0, 0, 0, 0, 0])
         self.h = 0
         self.w = 0
         self.lenkwinkel = 90
+        self.hMin = self.sMin = self.vMin = 0
+        self.hMax = self.sMax = self.vMax = 255
+        self.csvDictread("calibration_hsv.csv")
         print("Init abgeschlossen")
+
+    def csvDictread(self, source):
+        with open(source, newline='') as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                self.hMin = int(row["hMin"])
+                self.sMin = int(row["sMin"])
+                self.vMin = int(row["vMin"])
+                self.hMax = int(row["hMax"])
+                self.sMax = int(row["sMax"])
+                self.vMax = int(row["vMax"])
 
     def video_capture(self):
         
@@ -30,14 +45,13 @@ class CamCar(object):
 
         #ROI region of Interest
         h1, w1, _ = image_hsv.shape
-        img_hsv = image_hsv[int(h1*2/3):int(h1),int(w1*1/10):int(w1*9/10)]
-        #h1, w1, _ = image_hsv.shape
+        img_hsv = image_hsv[int(h1*0.3):int(h1*0.8),int(w1*1/20):int(w1*19/20)]
         mid_pic_w = w1/2
-        #print(img_hsv)
+        
 
         # Erzeugung einer Maske (Farbfilter für blau)
-        lower = np.array([85, 68, 0])
-        upper = np.array([122, 255, 255])
+        lower = np.array([self.hMin, self.sMin, self.vMin])
+        upper = np.array([self.hMax, self.sMax, self.vMax])
         mask = cv.inRange(img_hsv, lower, upper) # mask ist Numpy-Array
 
         # mask_cn = cv.Canny(img_hsv, 50, 200)
@@ -108,7 +122,7 @@ class CamCar(object):
        
         rho = 1  # distance precision in pixel, i.e. 1 pixel
         angle = np.pi / 180  # angular precision in radian, i.e. 1 degree
-        min_threshold = 60  # in etwa Anzahl der Punkte auf der Geraden. Je geringer Min_threshold, dest mehr Geraden werden erkannt.
+        min_threshold = 30  # in etwa Anzahl der Punkte auf der Geraden. Je geringer Min_threshold, dest mehr Geraden werden erkannt.
         minLineLength = 8    # Minimale Linienlänge
         maxLineGap = 10       # Maximale Anzahl von Lücken in der Linie
 
