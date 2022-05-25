@@ -178,7 +178,7 @@ class CamCar(object):
             # Durchschnitt der rechten Linien 
             if len(rh_lines) == 0:
                 print("Keine Linien in der rechten Bildhälfte gefunden")
-                x3r = w  # Volle Unterstützung dieser Seite
+                x3r = self.w  # Volle Unterstützung dieser Seite
             else:
                 rh_lines_mean = np.mean(rh_lines, axis=0).astype("int")
                 x1,y1,x2,y2 = rh_lines_mean
