@@ -17,10 +17,12 @@ class CamCar(object):
         self.lenkwinkel = 90
         self.hMin = self.sMin = self.vMin = 0
         self.hMax = self.sMax = self.vMax = 255
-        self.csvDictread("calibration_hsv.csv")
+        self.ROI_left = self.ROI_right = self.ROI_bottom = self.ROI_top = 0
+        self.csvDictread_HSV("calibration_hsv.csv")
+        self.csvDictread_ROI("calibration_ROI.csv")
         print("Init abgeschlossen")
 
-    def csvDictread(self, source):
+    def csvDictread_HSV(self, source):
         with open(source, newline='') as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
@@ -31,6 +33,16 @@ class CamCar(object):
                 self.sMax = int(row["sMax"])
                 self.vMax = int(row["vMax"])
 
+    def csvDictread_ROI(self, source):
+        with open(source, newline='') as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                self.ROI_left = int(row["Left"])
+                self.ROI_right = int(row["Right"])
+                self.ROI_bottom = int(row["Bottom"])
+                self.ROI_top = int(row["Top"])
+
+
     def video_capture(self):
         
         
@@ -39,13 +51,16 @@ class CamCar(object):
 
         # Resizing
         height, width, _ = image.shape
-        image = cv.resize(image,(int(width*2/3), int(height*2/3)), interpolation = cv.INTER_CUBIC)
+        # image = cv.resize(image,(int(width*2/3), int(height*2/3)), interpolation = cv.INTER_CUBIC)
         # BGR2HSV-Transformation
         image_hsv = cv.cvtColor(image, cv.COLOR_BGR2HSV)
 
         #ROI region of Interest
         h1, w1, _ = image_hsv.shape
-        img_hsv = image_hsv[int(h1*0.3):int(h1*0.8),int(w1*1/20):int(w1*19/20)]
+        print(h1, self.ROI_bottom, self.ROI_top)
+        print(w1, self.ROI_left, self.ROI_right)
+        img_hsv = image_hsv[int(self.ROI_top):int(self.ROI_bottom),int(self.ROI_left):int(self.ROI_right)]
+        # img_hsv = image_hsv[int(h1*1/3):int(h1*2/3),int(w1*1/10):int(w1*9/10)]
         mid_pic_w = w1/2
         
 
@@ -225,7 +240,8 @@ class CamCar(object):
             if cv.waitKey(1) == ord('q'):
                 break
             self.bc.drive(20, 1, self.lenkwinkel)
-
+            
+        self.bc.stop()
         self.Cam.release()
     
 
