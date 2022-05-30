@@ -5,13 +5,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 import collections as col
 import csv
+from datetime import datetime
+import os.path
 
 class CamCar(object):
 
     def __init__(self):
         self.bc = bc.BaseCar()
         self.Cam = bk_cam.Camera()
-        self.steeringangle_dq = col.deque([0, 0, 0, 0])#, 0, 0, 0, 0, 0, 0])
+        self.steeringangle_dq = col.deque([0, 0]) # , 0, 0])#, 0, 0, 0, 0, 0, 0])
         self.h = 0
         self.w = 0
         self.lenkwinkel = 90
@@ -20,6 +22,11 @@ class CamCar(object):
         self.ROI_left = self.ROI_right = self.ROI_bottom = self.ROI_top = 0
         self.csvDictread_HSV("calibration_hsv.csv")
         self.csvDictread_ROI("calibration_ROI.csv")
+        self.timestamp_id = datetime.now().strftime('%Y-%m-%d_%H-%M-%S.%f')[:-4]
+        self.image_id = 0
+        if not os.path.exists(os.path.join(os.getcwd(), "images_FP7")):
+            os.makedirs(os.path.join(os.getcwd(), "images_FP7"))
+        print(self.timestamp_id)
         print("Init abgeschlossen")
 
     def csvDictread_HSV(self, source):
@@ -76,6 +83,8 @@ class CamCar(object):
         image_hough, x3m = self.line_detectP(mask_cn)
         self.autolenkwinkel(x3m)
 
+        # Fahrdaten (Bild & Lenkwinkel) in JPEG schreiben
+        save_drivingdata(self, img_hsv)
         # Visualisierung des Bilds
         #cv.imshow("Display window (press q to quit)", mask_cn)
         #cv.imshow("Display window (press q to quit)", image_hough)
@@ -135,9 +144,10 @@ class CamCar(object):
         img2 = mask.copy()
         img2 = cv.cvtColor(img2, cv.COLOR_GRAY2RGB)
        
+        x3m = int(self.w/2)
         rho = 1  # distance precision in pixel, i.e. 1 pixel
         angle = np.pi / 180  # angular precision in radian, i.e. 1 degree
-        min_threshold = 30  # in etwa Anzahl der Punkte auf der Geraden. Je geringer Min_threshold, dest mehr Geraden werden erkannt.
+        min_threshold = 15  # in etwa Anzahl der Punkte auf der Geraden. Je geringer Min_threshold, dest mehr Geraden werden erkannt.
         minLineLength = 8    # Minimale Linienlänge
         maxLineGap = 10       # Maximale Anzahl von Lücken in der Linie
 
@@ -239,7 +249,7 @@ class CamCar(object):
             # Ende bei Drücken der Taste q
             if cv.waitKey(1) == ord('q'):
                 break
-            self.bc.drive(20, 1, self.lenkwinkel)
+            # self.bc.drive(30, 1, self.lenkwinkel)
             
         self.bc.stop()
         self.Cam.release()
@@ -253,6 +263,20 @@ def diff_epsi(diff, epsilon):
         else:
             diff = -epsilon
     return diff
+
+def save_drivingdata(self, image):
+    """
+    Speichert das aktuelle Bild mit entsprechendem Lenkwinkel in Ordner als jpeg ab
+    """
+    jpeg = self.Cam.get_jpeg(image)
+    name = f"{self.timestamp_id}_{self.image_id:03d}_{int(self.lenkwinkel):03d}.jpeg"
+    print("Name", name)
+    print("Typ",type(name))
+    self.Cam.save_frame(
+        "images_FP7/",name , image)
+    self.image_id += 1
+
+
 
 
 def main():
