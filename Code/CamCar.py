@@ -22,12 +22,13 @@ class CamCar(object):
         self.ROI_left = self.ROI_right = self.ROI_bottom = self.ROI_top = 0
         self.csvDictread_HSV("calibration_hsv.csv")
         self.csvDictread_ROI("calibration_ROI.csv")
-        self.timestamp_id = datetime.now().strftime('%Y-%m-%d_%H-%M-%S.%f')[:-4]
+        self.timestamp_id = datetime.now().strftime('%Y%m%d_%H%M%S.%f')[:-6]
         self.image_id = 0
+        self.linesfound = False
         if not os.path.exists(os.path.join(os.getcwd(), "images_FP7")):
             os.makedirs(os.path.join(os.getcwd(), "images_FP7"))
-        print(self.timestamp_id)
-        print("Init abgeschlossen")
+        # print(self.timestamp_id)
+        # print("Init abgeschlossen")
 
     def csvDictread_HSV(self, source):
         with open(source, newline='') as csvfile:
@@ -57,18 +58,17 @@ class CamCar(object):
         image = self.Cam.get_frame()
 
         # Resizing
-        height, width, _ = image.shape
+        # height, width, _ = image.shape
         # image = cv.resize(image,(int(width*2/3), int(height*2/3)), interpolation = cv.INTER_CUBIC)
         # BGR2HSV-Transformation
         image_hsv = cv.cvtColor(image, cv.COLOR_BGR2HSV)
 
         #ROI region of Interest
         h1, w1, _ = image_hsv.shape
-        print(h1, self.ROI_bottom, self.ROI_top)
-        print(w1, self.ROI_left, self.ROI_right)
+        # print(h1, self.ROI_bottom, self.ROI_top)
+        # print(w1, self.ROI_left, self.ROI_right)
         img_hsv = image_hsv[int(self.ROI_top):int(self.ROI_bottom),int(self.ROI_left):int(self.ROI_right)]
-        # img_hsv = image_hsv[int(h1*1/3):int(h1*2/3),int(w1*1/10):int(w1*9/10)]
-        mid_pic_w = w1/2
+        # mid_pic_w = w1/2
         
 
         # Erzeugung einer Maske (Farbfilter für blau)
@@ -78,73 +78,27 @@ class CamCar(object):
 
         # mask_cn = cv.Canny(img_hsv, 50, 200)
         mask_cn = cv.Canny(mask, 199, 200)
-        # print("mask_cn: ", mask_cn)
-        #image_hough = self.line_detection(mask_cn)
         image_hough, x3m = self.line_detectP(mask_cn)
         self.autolenkwinkel(x3m)
 
         # Fahrdaten (Bild & Lenkwinkel) in JPEG schreiben
-        save_drivingdata(self, img_hsv)
+        if self.linesfound == True:
+            self.save_drivingdata(img_hsv)
+        
         # Visualisierung des Bilds
-        #cv.imshow("Display window (press q to quit)", mask_cn)
-        #cv.imshow("Display window (press q to quit)", image_hough)
         img = cv.cvtColor(mask_cn, cv.COLOR_GRAY2BGR)
         img = np.hstack((img_hsv, image_hough))
-        # cv.imshow("Display window (press q to quit)", img)
-        # # Ende bei Drücken der Taste q
-        # if cv.waitKey(1) == ord('q'):
-        #     break
-        # Kamera-Objekt muss "released" werden, um "später" ein neues Kamera-Objekt erstellen zu können!!!
+        
         return img
-        #self.Cam.release()
+        
     
-    """def line_detection(self, mask):
-        # Klassische Hough-Transformation
-        rho = 1  # distance precision in pixel, i.e. 1 pixel
-        angle = np.pi / 180  # angular precision in radian, i.e. 1 degree
-        min_threshold = 60  # minimal of votes, Je geringer Min_threshold, dest mehr Geraden werden erkannt.
-                             # 180 gut für inRange ohne Canny, 60 gut für inRange mit Canny
-        
-        parameter_mask = cv.HoughLines(mask, rho, angle, min_threshold)
-        print("Shape Parameter_mask:", parameter_mask.shape) # type(parameter_mask) = numpy.ndarray
-        
-        img2 = mask.copy()
-        img2 = cv.cvtColor(img2, cv.COLOR_GRAY2RGB)
-        for line in parameter_mask:
-            print("Anzahl Linien: ", len(parameter_mask))
-            rho, theta = line[0]
-            epsilon = 1e-6
-            sinus_theta = np.sin(theta)
-            if abs(sinus_theta) < epsilon:
-                ''' Nenner < epsilon => Abs(Nenner) = epsilon mit richtigem Vorzeichen'''
-                if sinus_theta >= 0:
-                    sinus_theta = epsilon
-                else:
-                    sinus_theta = -epsilon
-            a = -np.cos(theta)/sinus_theta # Anstieg der Gerade
-            b = rho/sinus_theta            # Absolutglied/Intercept/Schnittpunkt mit der y-Achse
-            x1 = 0
-            y1 = int(b)
-            x2 = 1000
-            y2 = int(a*1000+b)
-            #print(x1,x2,y1,y2)
-            img2 = cv.line(img2, (x1,y1), (x2,y2), (200,100,100), 1) # adds a line to an image
-            cv.putText(img2, 
-                text = 'erkannte Geraden',
-                org=(10,190), # Position
-                fontFace= cv.FONT_HERSHEY_SIMPLEX,
-                fontScale = .8, # Font size
-                color = (120,255,255), # Color in hsv
-                thickness = 2)
-        return img2"""
-        
 
     def line_detectP(self, mask):
          # Probabilistische Hough-Transformation
         img2 = mask.copy()
         img2 = cv.cvtColor(img2, cv.COLOR_GRAY2RGB)
        
-        x3m = int(self.w/2)
+        
         rho = 1  # distance precision in pixel, i.e. 1 pixel
         angle = np.pi / 180  # angular precision in radian, i.e. 1 degree
         min_threshold = 15  # in etwa Anzahl der Punkte auf der Geraden. Je geringer Min_threshold, dest mehr Geraden werden erkannt.
@@ -154,9 +108,12 @@ class CamCar(object):
         line_segments = cv.HoughLinesP(mask, rho, angle, min_threshold, np.array([]), minLineLength=minLineLength, maxLineGap=maxLineGap)
 
         if line_segments is None:
-            print("HoughLinesP hat keine Linien gefunden")
+            self.linesfound = False
+            # print("HoughLinesP hat keine Linien gefunden")
+            x3m = int(self.w/2)
         else:
             # Elemente stellen Punkte des Liniensegmentes dar (x1,y1,x2,y2)
+            self.linesfound = True
             lh_lines = []
             rh_lines = []
 
@@ -167,7 +124,6 @@ class CamCar(object):
             for line in line_segments:
                 x1,y1,x2,y2 = line[0]
                 line_act = [x1,y1,x2,y2]
-                # print(x1,y1,x2,y2)
                 mean_x = (x1+x2)/2
 
                 # Aufteilung der Linien in links und rechts    
@@ -184,7 +140,7 @@ class CamCar(object):
 
             # Durchschnitt der linken Linien 
             if len(lh_lines) == 0:
-                print("Keine Linien in der linken Bildhälfte gefunden")
+                # print("Keine Linien in der linken Bildhälfte gefunden")
                 x3l = 0  # Volle Unterstützung dieser Seite
             else:
                 lh_lines_mean = np.mean(lh_lines, axis=0).astype("int")
@@ -192,7 +148,7 @@ class CamCar(object):
 
                 # Sehr kleinen Nenner abfangen
                 dy12 = diff_epsi((y2-y1), 1e-6)
-                print("dy12:", dy12)
+                # print("dy12:", dy12)
 
                 # Schnittpunkt der linken "Mittellinie" mit oberem Bildrand
                 x3l = int((x2-x1)/(dy12) * (y3-y1) + x1)
@@ -202,7 +158,7 @@ class CamCar(object):
 
             # Durchschnitt der rechten Linien 
             if len(rh_lines) == 0:
-                print("Keine Linien in der rechten Bildhälfte gefunden")
+                # print("Keine Linien in der rechten Bildhälfte gefunden")
                 x3r = self.w  # Volle Unterstützung dieser Seite
             else:
                 rh_lines_mean = np.mean(rh_lines, axis=0).astype("int")
@@ -226,10 +182,23 @@ class CamCar(object):
         return img2, x3m
 
 
+    def save_drivingdata(self, image):
+        """
+        Speichert das aktuelle Bild mit entsprechendem Lenkwinkel in Ordner als jpeg ab
+        """
+        jpeg = self.Cam.get_jpeg(image)
+        name = f"{self.timestamp_id}_{self.image_id:03d}_{int(self.lenkwinkel):03d}.jpeg"
+        print("Name", name)
+        print("Typ",type(name))
+        self.Cam.save_frame(
+            "images_FP7/",name , image)
+        self.image_id += 1
+
+
     def autolenkwinkel(self, x3m):
         
         steering_angle=np.arctan((self.w/2-x3m)/self.h)*(-1)*(180)/np.pi
-        print(steering_angle)
+        # print(steering_angle)
         
         self.steeringangle_dq.append(steering_angle)
         self.steeringangle_dq.popleft()
@@ -249,10 +218,22 @@ class CamCar(object):
             # Ende bei Drücken der Taste q
             if cv.waitKey(1) == ord('q'):
                 break
-            # self.bc.drive(30, 1, self.lenkwinkel)
+            self.bc.drive(30, 1, self.lenkwinkel)
             
         self.bc.stop()
         self.Cam.release()
+
+# def save_drivingdata(self, image):
+#     """
+#     Speichert das aktuelle Bild mit entsprechendem Lenkwinkel in Ordner als jpeg ab
+#     """
+#     jpeg = self.Cam.get_jpeg(image)
+#     name = f"{self.timestamp_id}_{self.image_id:03d}_{int(self.lenkwinkel):03d}.jpeg"
+#     print("Name", name)
+#     print("Typ",type(name))
+#     self.Cam.save_frame(
+#         "images_FP7/",name , image)
+#     self.image_id += 1
     
 
 def diff_epsi(diff, epsilon):
@@ -264,23 +245,12 @@ def diff_epsi(diff, epsilon):
             diff = -epsilon
     return diff
 
-def save_drivingdata(self, image):
-    """
-    Speichert das aktuelle Bild mit entsprechendem Lenkwinkel in Ordner als jpeg ab
-    """
-    jpeg = self.Cam.get_jpeg(image)
-    name = f"{self.timestamp_id}_{self.image_id:03d}_{int(self.lenkwinkel):03d}.jpeg"
-    print("Name", name)
-    print("Typ",type(name))
-    self.Cam.save_frame(
-        "images_FP7/",name , image)
-    self.image_id += 1
+
 
 
 
 
 def main():
-    # TestCam = bk_cam.Camera()   
     TestCam = CamCar()
     TestCam.Fahrparcours_7()
     
