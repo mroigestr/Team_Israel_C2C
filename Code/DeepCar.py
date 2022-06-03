@@ -1,16 +1,16 @@
 import basisklassen_cam as bk_cam
 import BaseCar as bc
 import cv2 as cv
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import numpy as np
-import collections as col
+# import collections as col
 import csv
-from datetime import datetime
-import os.path
+# from datetime import datetime
+# import os.path
 import collections as col
-from typing import List
+# from typing import List
 import os
-import datetime
+# import datetime
 #import pandas as pd
 import tensorflow as tf
 from tensorflow.keras import Sequential
@@ -25,7 +25,7 @@ from tensorflow.keras.layers import Conv2D, Dropout, Flatten
 class DeepCar(object):
 
     def __init__(self):
-        self.model = load_model('JohnyCar_PH_v1.h5')
+        self.model = load_model('JohnyCar_PH.h5')
         self.bc = bc.BaseCar()
         self.Cam = bk_cam.Camera()
         self.ROI_left = self.ROI_right = self.ROI_bottom = self.ROI_top = 0
@@ -42,10 +42,16 @@ class DeepCar(object):
                 self.ROI_right = int(row["Right"])
                 self.ROI_bottom = int(row["Bottom"])
                 self.ROI_top = int(row["Top"])
-                print(self.ROI_top)
 
 
     def video_capture(self):
+        """
+        Methode zur Bild-Erzeugung, Reduktion auf relevanten Bildbereich & Konvertierung in den HSV-Farbraum
+        Input: kein Input erforderlich
+        Output: 
+            - img_hsv: Bild im HSV-Farbraum zur Ausgabe
+            - img_list: Bild in Liste zur Verwendung für neuronales Netz
+        """
         
         
         # Abfrage eines Frames            
@@ -59,20 +65,27 @@ class DeepCar(object):
         # resize Numpy-Array
         list = [img_hsv]
         img_list = np.array(list)
-        # img_hsv = np.concatenate(np.array([1]), img_hsv)
-
+        
         return img_hsv, img_list
 
     def Fahrpacours_8(self):
+        """
+        Fahrspurverfolgung mittels eines Neuronalen Netzes.
+        -> Einlesen der Bilder; Ausgabe des Lenkwinkels mit Hilfe des neuronalen Netzes
+        Input: kein Input
+        Output: kein Output
+        """
         while True:
+            # Bild-Erzeugung
             img, img_list = self.video_capture()
+            # Berechnung Lenkwinkel
             lw_predict = self.model.predict(img_list)
-            print("lw_predict",lw_predict)
+            # Darstellung des Bilds
             cv.imshow("Display window (press q to quit)", img)
             # Ende bei Drücken der Taste q
             if cv.waitKey(1) == ord('q'):
                 break
-        
+            # Fahrbefehl mit berechnetem Lenkwinkel
             self.bc.drive(30, 1, lw_predict)
         
         self.bc.stop()
